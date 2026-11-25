@@ -2,7 +2,7 @@
 
 A clickable preview of the Hashevaynu iOS app design. It runs in any browser, with no sign-in and no app install.
 
-**Live preview:** https://designbydaniel1.github.io/hashevaynu-prototype/
+**Live preview:** https://designbydaniel1.github.io/-hashevaynu-prototype/
 
 ## What you can try
 - **Shiurim:** today's daf, continue listening, playlists and the latest shiurim. Tap any shiur to play it. Audio streams from the Hashevaynu SoundCloud feed.
