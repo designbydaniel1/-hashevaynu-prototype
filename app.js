@@ -204,7 +204,7 @@
   const mini = () => {
     const e = byId[S.current]; if (!e) return '';
     const p = e.dur ? (audio.currentTime || pos(e)) / e.dur : 0;
-    return `<div class="mini">
+    return `<div class="mini${enter('mini', S.current)}">
       <button class="mini-open" data-act="openPlayer" aria-label="Open player">
         ${tile(e, 42)}
         <div style="min-width:0;display:flex;flex-direction:column"><span class="mini-title">${esc(e.title)}</span><span class="row-meta">${esc(e.speaker)}</span></div>
@@ -342,7 +342,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
       const pl = PL && PL.playlists.find((x) => x.category === 'daf' && norm(x.short) === norm(base.name));
       const pool = pl ? pl.eps : base.key === 'current' ? dafEps : [];
       const ep = pool.find((e) => (parseDaf(e.title) || {}).daf === d);
-      card = `<div class="float-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><div style="font-size:17px;font-weight:700">${esc(base.name)} ${d}a–${d}b</div><div class="row-meta" style="font-size:13px">${status}</div></div>
+      card = `<div class="float-card${enter('sel', base.key + ':' + S.sel)}"><div style="display:flex;justify-content:space-between;gap:8px"><div><div style="font-size:17px;font-weight:700">${esc(base.name)} ${d}a–${d}b</div><div class="row-meta" style="font-size:13px">${status}</div></div>
         <button class="icon-btn" style="width:32px;height:32px;color:var(--text2)" data-act="sel" data-arg="0" aria-label="Close">${I.x}</button></div>
         ${avail ? `<div style="display:flex;gap:8px"><button class="pill solid" style="flex:1" data-act="${ep ? 'play' : 'toast'}" data-arg="${ep ? ep.id : 'In the app, this plays ' + esc(base.name) + ' ' + d + ' from SoundCloud'}">${I.play(16)}${p >= 1 ? 'Review' : p > 0 ? 'Resume' : 'Play'}</button>
           <button class="pill fill" style="flex:1" data-act="learned">${I.check(16)}${p >= 1 ? 'Mark not learned' : 'Mark learned'}</button></div>` : ''}</div>`;
@@ -594,7 +594,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     const e = byId[S.current]; if (!e) return '';
     const s = ser(e), t = audio.currentTime || pos(e), d = audio.duration || e.dur, saved = isSaved(e);
     const sleeps = ['Sleep timer', '15 min', '30 min', 'End of shiur'], dl = S.dl[e.id] || 0;
-    return `<div class="sheet" id="sheet" role="dialog" aria-label="Now playing">
+    return `<div class="sheet${enter('sheet', true)}" id="sheet" role="dialog" aria-label="Now playing">
       <div style="width:100%;display:flex;align-items:center;justify-content:space-between">
         <button class="icon-btn" style="background:none;margin-left:-10px" data-act="closePlayer" aria-label="Close player">${I.down}</button>
         <span class="label">${esc(s.name)}</span><span style="width:44px"></span></div>
@@ -623,12 +623,18 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
   const scrolls = {};
   let toastTimer = null, toastMsg = '';
   const route = () => { const top = S.stack[S.stack.length - 1]; if (!top) return [S.tab, null]; const [n, a] = top.split(':'); return [n, a || null]; };
+  // Animations play only when something first appears, not on every redraw.
+  const shown = { sheet: false, mini: null, sel: null, toast: '' };
+  const enter = (key, now) => { const fresh = now && shown[key] !== now; shown[key] = now; return fresh ? ' anim' : ''; };
   function render() {
     app.querySelectorAll('.scroll[data-key]').forEach((el) => { scrolls[el.dataset.key] = el.scrollTop; });
     const [name, arg] = route();
     const hasTabs = name !== 'search';
     app.innerHTML = screens[name](arg) + (hasTabs && !((name === 'masechta' || (name === 'daf' && S.dafTab === 'map')) && S.sel) ? mini() : '') + (hasTabs ? tabbar() : '')
-      + (S.playerOpen ? player() : '') + (toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : '');
+      + (S.playerOpen ? player() : '') + (toastMsg ? `<div class="toast${enter('toast', toastMsg)}" role="status">${esc(toastMsg)}</div>` : '');
+    if (!S.playerOpen) shown.sheet = false;
+    if (!S.sel) shown.sel = null;
+    if (!toastMsg) shown.toast = '';
     app.querySelectorAll('.scroll[data-key]').forEach((el) => { if (scrolls[el.dataset.key]) el.scrollTop = scrolls[el.dataset.key]; });
     const q = document.getElementById('q');
     if (q) { q.addEventListener('input', () => { S.query = q.value; document.getElementById('results').innerHTML = searchResults(); }); if (!q.value) q.focus({ preventScroll: true }); }
