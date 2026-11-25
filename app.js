@@ -593,7 +593,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
   const player = () => {
     const e = byId[S.current]; if (!e) return '';
     const s = ser(e), t = audio.currentTime || pos(e), d = audio.duration || e.dur, saved = isSaved(e);
-    const sleeps = ['Sleep timer', '15 min', '30 min', 'End of shiur'], dl = S.dl[e.id] || 0;
+    const dl = S.dl[e.id] || 0;
     return `<div class="sheet${enter('sheet', true)}" id="sheet" role="dialog" aria-label="Now playing">
       <div style="width:100%;display:flex;align-items:center;justify-content:space-between">
         <button class="icon-btn" style="background:none;margin-left:-10px" data-act="closePlayer" aria-label="Close player">${I.down}</button>
@@ -609,12 +609,12 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
         <button class="icon-btn" style="width:52px;height:52px;background:none;color:var(--text)" data-act="skip" data-arg="-15" aria-label="Back 15 seconds">${I.skip(-1, 15, 34)}</button>
         <button class="icon-btn" style="width:80px;height:80px;border-radius:40px;background:var(--accent);color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.2)" data-act="toggle" aria-label="${S.playing ? 'Pause' : 'Play'}">${S.playing ? I.pause(32) : I.play(32)}</button>
         <button class="icon-btn" style="width:52px;height:52px;background:none;color:var(--text)" data-act="skip" data-arg="30" aria-label="Forward 30 seconds">${I.skip(1, 30, 34)}</button></div>
-      <div style="margin-top:auto;padding-top:18px;width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:8px">
-        <button class="feature ${dl === 2 ? 'on' : ''}" data-act="download">${I.dl}${['Download', 'Downloading…', 'Downloaded'][dl]}</button></div>
-      <div style="margin-top:10px;width:100%;display:flex;justify-content:space-between">
-        <button class="pill fill" style="color:${saved ? 'var(--save)' : 'var(--text)'}" data-act="save" data-arg="${e.id}">${I.bookmark(saved, 20)}${saved ? 'Saved' : 'Save'}</button>
-        <button class="pill fill" style="min-width:64px;font-size:15px;font-weight:700" data-act="rate" aria-label="Playback speed">${S.rate}×</button>
-        <button class="pill fill" data-act="share" data-arg="${e.id}">${I.share}Share</button></div>
+      <div style="margin-top:auto;padding-top:22px;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
+        <button class="icon-row-btn" style="color:${saved ? 'var(--save)' : 'var(--text)'}" data-act="save" data-arg="${e.id}" aria-label="${saved ? 'Remove from Saved' : 'Save for later'}" aria-pressed="${saved}">${I.bookmark(saved, 24)}</button>
+        <button class="icon-row-btn" data-act="share" data-arg="${e.id}" aria-label="Share">${I.share.replace(/20/g, '24')}</button>
+        <button class="icon-row-btn" style="font-size:16px;font-weight:800" data-act="rate" aria-label="Playback speed ${S.rate}×">${S.rate}×</button>
+        <button class="icon-row-btn" style="color:${dl === 2 ? 'var(--accent-text)' : 'var(--text)'}" data-act="download" aria-label="${['Download', 'Downloading', 'Downloaded, tap to remove'][dl]}">${dl === 1 ? '<span class="mini-spin" aria-hidden="true"></span>' : dl === 2 ? I.check(24) : I.dl.replace(/20/g, '24')}</button>
+      </div>
     </div>`;
   };
 
