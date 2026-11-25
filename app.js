@@ -233,45 +233,38 @@
     ${searchBtn()}</div></div>`;
   };
 
-  screens.daf = () => {
+const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:12px;background:var(--fill);margin:14px 16px 0">
+    ${[['today', 'Today'], ['map', 'Daf map']].map(([k, l]) => `<button role="tab" aria-selected="${on === k}" data-act="dafTab" data-arg="${k}" style="height:36px;border-radius:9px;font-size:14px;font-weight:600;${on === k ? 'background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.15)' : 'color:var(--text2)'}">${l}</button>`).join('')}</div>`;
+  screens.daf = () => S.dafTab === 'map' ? screens.masechta(S.mas, true) : dafToday();
+  const dafToday = () => {
     const todayPlaying = todayDaf && S.current === todayDaf.id && S.playing;
     const week = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     const dow = new Date().getDay();
     const stats = (m) => { let n = 0; const ov = S.overrides[m.key] || {}; for (let d = 2; d <= m.last; d++) if (((d in ov) ? ov[d] : (m.progress[d] || 0)) >= 1) n++; return n; };
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="daf">
       <div class="pad" style="padding-right:64px"><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>
+      ${dafTabs('today')}
       ${todayDaf ? `<div class="pad" style="margin-top:16px"><div class="card-accent" style="border-radius:22px;padding:20px;gap:14px">
         <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85"><b style="letter-spacing:.08em;text-transform:uppercase">Today · ${fmtDate(todayDaf.date)}</b><span>${fmtMin(todayDaf.dur)}</span></div>
         <div><div style="font-size:15px;font-weight:600;opacity:.85">Maseches ${esc(today.mas)}</div><div style="font-size:34px;line-height:40px;font-weight:800;letter-spacing:-.02em">Daf ${today.daf}</div></div>
         <div style="display:flex;flex-direction:column;gap:6px"><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25)"><div style="height:6px;width:${Math.round(today.daf / cur.last * 100)}%;border-radius:3px;background:#fff"></div></div>
           <span style="font-size:12px;opacity:.85">Daf ${today.daf} of ${cur.last} · ${stats(cur)} learned</span></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="pill white" data-act="play" data-arg="${todayDaf.id}">${todayPlaying ? I.pause(16) + 'Playing' : I.play(16) + 'Play today’s daf'}</button>
-          <button class="pill ghost" data-act="go" data-arg="masechta:current">Daf map</button></div>
+          <button class="pill ghost" data-act="dafMap" data-arg="current">Daf map</button></div>
       </div></div>` : ''}
       <div class="pad" style="margin-top:12px"><a href="https://chat.whatsapp.com/GQ7aFSgUHTTI7say5d1Tyc" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:#15803D;color:#fff">
         <div style="width:46px;height:46px;flex:none;border-radius:23px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center">${I.whatsapp(26)}</div>
         <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">Join the Daf Yomi WhatsApp group</div><div style="font-size:13px;opacity:.9;margin-top:1px">Daily daf updates, schedule changes and sponsorships</div></div>
         <span style="height:34px;padding:0 14px;border-radius:17px;background:#fff;color:#15803D;font-size:14px;font-weight:700;display:flex;align-items:center">Join</span></a></div>
-      <div class="pad" style="margin-top:14px"><div style="border-radius:18px;border:1px solid var(--border);padding:14px 16px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:42px;height:42px;border-radius:21px;background:var(--save-bg);color:var(--save);display:flex;align-items:center;justify-content:center">${I.flame}</div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:1px"><b style="font-size:17px;font-weight:800">12-day streak</b><span class="row-meta">Your best: 31 days · keep it going today</span></div>
-          <button class="chip" style="height:34px;font-size:13px;font-weight:700;${S.follow ? 'border:1px solid var(--border)' : 'background:var(--accent);color:#fff'}" data-act="flag" data-arg="follow" aria-pressed="${S.follow}">${S.follow ? 'Following' : 'Follow'}</button>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">${week.map((d, i) => { const done = i < dow || (i === dow && todayPlaying); return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px"><span class="row-meta" style="font-weight:600">${d}</span>
-          <span style="width:30px;height:30px;border-radius:15px;background:${done ? 'var(--streak)' : 'var(--fill)'};${i === dow ? 'box-shadow:0 0 0 2px var(--accent-text);' : ''}color:#fff;display:flex;align-items:center;justify-content:center">${done ? I.check(14) : ''}</span></div>`; }).join('')}</div>
-        <div style="border-top:1px solid var(--sep)">
-          ${[['remind', 'Daily reminder', S.remind ? 'Every day at 7:00 AM · “Today’s daf is ready”' : 'Off'], ['autodl', 'Auto-download', S.autodl ? 'Keep the latest 3 dafim on this phone for offline' : 'Off']].map(([k, t, d]) =>
-            `<div style="display:flex;align-items:center;gap:12px;min-height:52px;border-bottom:1px solid var(--sep)"><div style="flex:1"><div style="font-size:15px;font-weight:600">${t}</div><div class="row-meta">${d}</div></div>
-            <button class="switch" role="switch" aria-checked="${S[k]}" aria-label="${t}" data-act="flag" data-arg="${k}"></button></div>`).join('')}
-        </div>
-      </div></div>
-      <div class="sec-head"><h2 class="h2">Latest dafim</h2><button class="link" data-act="go" data-arg="masechta:current">Daf map</button></div>
+      <div class="sec-head"><h2 class="h2">Latest dafim</h2><button class="link" data-act="dafMap" data-arg="current">Daf map</button></div>
       ${dafEps.slice(0, 6).map(epRow).join('')}
-      <h2 class="h2" style="margin:24px 16px 4px">Masechtos</h2><p class="pad row-meta" style="font-size:13px;margin-bottom:12px">Progress counts every daf you learned, in any order</p>
+      ${PL ? (() => { const daf = PL.playlists.filter((p) => p.category === 'daf'); return `<div class="sec-head" style="margin-top:26px"><h2 class="h2">Daf Yomi series <span class="muted" style="font-size:15px;font-weight:500">${daf.length}</span></h2><button class="link" data-act="go" data-arg="section:daf">See all</button></div>
+        <p class="pad row-meta" style="font-size:13px;margin:-6px 0 12px">Every masechta in the cycle, newest first</p>
+        <div class="hscroll" style="align-items:flex-start">${daf.map((p) => plCard(p, 132)).join('')}</div>`; })() : ''}
+      <h2 class="h2" style="margin:24px 16px 4px">Your masechtos</h2><p class="pad row-meta" style="font-size:13px;margin-bottom:12px">Progress counts every daf you learned, in any order</p>
       <div class="pad" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${Object.values(MASECHTOS).map((m) => { const n = stats(m), total = m.last - 1, active = m.key === 'current';
         const status = active ? 'Learning now' : n === total ? 'Siyum' : 'In progress';
-        return `<button data-act="go" data-arg="masechta:${m.key}" style="border-radius:18px;padding:14px;background:var(--fill);display:flex;flex-direction:column;gap:10px;text-align:left">
+        return `<button data-act="dafMap" data-arg="${m.key}" style="border-radius:18px;padding:14px;background:var(--fill);display:flex;flex-direction:column;gap:10px;text-align:left">
           <div style="display:flex;justify-content:space-between;align-items:center;width:100%"><div style="width:36px;height:36px;border-radius:10px;background:${active ? 'var(--accent)' : 'var(--bg)'};color:${active ? '#fff' : 'var(--text2)'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${active ? '' : m.num}${active ? I.play(14) : ''}</div>
             <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${active || n === total ? 'var(--accent-text)' : 'var(--text2)'}">${status}</span></div>
           <div><div style="font-size:17px;font-weight:700">${esc(m.name)}</div><div class="row-meta">${n} of ${total} learned</div></div>
@@ -282,7 +275,7 @@
     ${searchBtn()}</div></div>`;
   };
 
-  screens.masechta = (key) => {
+  screens.masechta = (key, embedded) => {
     if (key && key !== S.masShown) { S.mas = key; S.masShown = key; S.sel = null; }
     const base = MASECHTOS[S.mas] || cur;
     const ov = S.overrides[base.key] || {};
@@ -311,8 +304,8 @@
     }
     const colors = ['var(--accent)', '#F59E0B', '#10B981', '#EC4899', '#8B5CF6', '#0EA5E9'];
     return `<div class="screen"><div class="scroll" data-key="masechta" style="padding-top:calc(var(--top) - 4px);padding-bottom:${S.sel ? 170 : 24}px">
-      <div class="pad">${backBtn('Daf Yomi')}</div>
-      <div class="hscroll" style="gap:8px;margin-top:8px">${Object.values(MASECHTOS).map((m) => `<button class="chip" aria-pressed="${m.key === base.key}" data-act="mas" data-arg="${m.key}">${esc(m.name)}</button>`).join('')}</div>
+      ${embedded ? `<div class="pad" style="padding-right:64px;padding-top:4px"><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>${dafTabs('map')}` : `<div class="pad">${backBtn('Daf Yomi')}</div>`}
+      <div class="hscroll" style="gap:8px;margin-top:${embedded ? 14 : 8}px">${Object.values(MASECHTOS).map((m) => `<button class="chip" aria-pressed="${m.key === base.key}" data-act="mas" data-arg="${m.key}">${esc(m.name)}</button>`).join('')}</div>
       <div class="pad" style="margin-top:14px;display:flex;align-items:center;gap:16px">
         <div style="position:relative;width:92px;height:92px;flex:none"><svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="38" fill="none" stroke="var(--track)" stroke-width="9"/>
           <circle cx="46" cy="46" r="38" fill="none" stroke="var(--accent-text)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C * ratio).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 46 46)" style="transition:stroke-dasharray 500ms cubic-bezier(.22,1,.36,1)"/></svg>
@@ -515,7 +508,7 @@
     }
     if (want('playlists') && !PL && (pls.length || mas.length)) {
       out += `<p class="label" style="margin:8px 16px 4px">Playlists</p>` + pls.map(([k, s]) => `<button data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}" class="row" style="width:100%;text-align:left">${'<div class="tile" style="width:48px;height:48px;background:' + s.tint + '">' + s.badge + '</div>'}<div class="row-text"><span class="row-title">${esc(s.name)}</span><span class="row-meta">Playlist · ${esc(s.total)}</span></div>${I.chev}</button>`).join('')
-        + mas.map((m) => `<button data-act="go" data-arg="masechta:${m.key}" class="row" style="width:100%;text-align:left"><div class="tile" style="width:48px;height:48px;background:var(--accent)">${m.key === 'current' ? 'DY' : m.num}</div><div class="row-text"><span class="row-title">${esc(m.name)}</span><span class="row-meta">Daf Yomi masechta · ${m.last - 1} dafim</span></div>${I.chev}</button>`).join('');
+        + mas.map((m) => `<button data-act="dafMap" data-arg="${m.key}" class="row" style="width:100%;text-align:left"><div class="tile" style="width:48px;height:48px;background:var(--accent)">${m.key === 'current' ? 'DY' : m.num}</div><div class="row-text"><span class="row-title">${esc(m.name)}</span><span class="row-meta">Daf Yomi masechta · ${m.last - 1} dafim</span></div>${I.chev}</button>`).join('');
     }
     if (want('shiurim') && eps.length) out += `<p class="label" style="margin:18px 16px 4px">Shiurim</p>` + eps.slice(0, 30).map(epRow).join('');
     if (want('speakers') && spk.length) out += `<p class="label" style="margin:18px 16px 4px">Speakers</p>` + spk.map((p) => `<div class="row"><div style="width:44px;height:44px;border-radius:22px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div><div class="row-text"><span class="row-title">${esc(p.name)}</span><span class="row-meta">${esc(p.topics)}</span></div></div>`).join('');
@@ -561,7 +554,7 @@
     app.querySelectorAll('.scroll[data-key]').forEach((el) => { scrolls[el.dataset.key] = el.scrollTop; });
     const [name, arg] = route();
     const hasTabs = name !== 'search';
-    app.innerHTML = screens[name](arg) + (hasTabs && !(name === 'masechta' && S.sel) ? mini() : '') + (hasTabs ? tabbar() : '')
+    app.innerHTML = screens[name](arg) + (hasTabs && !((name === 'masechta' || (name === 'daf' && S.dafTab === 'map')) && S.sel) ? mini() : '') + (hasTabs ? tabbar() : '')
       + (S.playerOpen ? player() : '') + (toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : '');
     app.querySelectorAll('.scroll[data-key]').forEach((el) => { if (scrolls[el.dataset.key]) el.scrollTop = scrolls[el.dataset.key]; });
     const q = document.getElementById('q');
@@ -642,7 +635,7 @@
   // ---------- Actions ----------
   const go = (where) => { S.stack.push(where); if (where.startsWith('masechta')) S.masShown = null; render(); };
   const A = {
-    tab: (k) => { S.tab = k; S.stack = []; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
+    tab: (k) => { if (k === 'daf' && S.tab === 'daf' && !S.stack.length) S.dafTab = 'today'; S.tab = k; S.stack = []; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
     go: (w) => { S.plShow = 60; S.plOldest = false; go(w); },
     back: () => { S.stack.pop(); S.sel = null; render(); },
     play: (id) => playEpisode(id),
@@ -662,9 +655,11 @@
     theme: () => { S.theme = { system: 'light', light: 'dark', dark: 'system' }[S.theme]; applyTheme(); persist(); render(); },
     searchFor: (q) => { S.query = q; if (route()[0] === 'search') { render(); } else go('search'); },
     scope: (k) => { S.scope = k; render(); },
+    dafTab: (k) => { S.dafTab = k; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
+    dafMap: (k) => { S.tab = 'daf'; S.stack = []; S.dafTab = 'map'; S.mas = k || 'current'; S.masShown = S.mas; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
     plOrder: () => { S.plOldest = !S.plOldest; S.plShow = 60; render(); },
     plMore: () => { S.plShow = (S.plShow || 60) + 100; render(); },
-    mas: (k) => { S.mas = k; S.masShown = k; S.sel = null; S.stack[S.stack.length - 1] = 'masechta:' + k; const st = app.querySelector('.scroll'); if (st) st.scrollTop = 0; render(); },
+    mas: (k) => { S.mas = k; S.masShown = k; S.sel = null; if (S.stack.length) S.stack[S.stack.length - 1] = 'masechta:' + k; const st = app.querySelector('.scroll'); if (st) st.scrollTop = 0; render(); },
     sel: (d) => { S.sel = +d || null; render(); },
     learned: () => { const base = MASECHTOS[S.mas]; const ov = Object.assign({}, S.overrides[base.key]); const p = (S.sel in ov) ? ov[S.sel] : (base.progress[S.sel] || 0);
       ov[S.sel] = p >= 1 ? 0 : 1; S.overrides[base.key] = ov; let n = 0; for (let d = 2; d <= base.last; d++) if (((d in ov) ? ov[d] : (base.progress[d] || 0)) >= 1) n++;
