@@ -6,6 +6,28 @@
   // ---------- Data ----------
   const EP = window.EPISODES || [];
   const byId = Object.fromEntries(EP.map((e) => [e.id, e]));
+  // Real SoundCloud playlists, synced every 6 hours into the app repository.
+  const PLAYLISTS_URL = 'https://raw.githubusercontent.com/designbydaniel1/hashevaynu-ios/main/data/playlists.json';
+  let PL = null; // { categories, playlists }
+  const plById = {};
+  const SERIES_OF = { daf: 'daf' };
+  function loadPlaylists() {
+    fetch(PLAYLISTS_URL, { cache: 'no-cache' }).then((r) => r.ok ? r.json() : null).then((d) => {
+      if (!d || !d.playlists) return;
+      d.playlists.forEach((p) => {
+        plById[p.id] = p;
+        p.eps = p.tracks.filter((t) => t.audio).map((t) => {
+          const known = byId[t.id];
+          const e = known || { id: t.id, title: t.title, date: t.date, dur: t.duration, audio: t.audio, link: t.link,
+            series: SERIES_OF[p.category] || (/mishnah berurah/i.test(p.title) ? 'mb' : /moonlight/i.test(p.title) ? 'me' : 'other'),
+            speaker: /dov elias/i.test(p.title + t.title) ? 'R’ Dov Elias' : 'Rabbi Avi Zakutinsky' };
+          if (!known) { if (e.series === 'other') { e.badge = p.badge; e.tint = p.color; } e.art = t.artwork || p.artwork; byId[t.id] = e; }
+          return e;
+        }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      });
+      PL = d; render();
+    }).catch(() => { /* offline: keep the built-in series */ });
+  }
   const SERIES = {
     daf: { name: 'Daf Yomi', short: 'Daf Yomi', badge: 'DY', tint: 'var(--accent)', total: '269 shiurim', sub: 'Rabbi Avi Zakutinsky' },
     mb: { name: 'Mishnah Berurah Yomi', short: 'Mishnah Berurah', badge: 'MB', tint: '#1F5F8B', total: '131 shiurim', sub: 'Dirshu cycle' },
@@ -71,7 +93,8 @@
   // ---------- Helpers ----------
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const fmtDate = (iso) => { const [, m, d] = iso.split('-'); return MONTHS[+m - 1] + ' ' + (+d); };
+  const fmtDate = (iso) => { if (!iso) return ''; const [y, m, d] = iso.split('-'); const now = new Date().getFullYear();
+    return MONTHS[+m - 1] + ' ' + (+d) + (+y !== now ? ', ' + y : ''); };
   const fmtMin = (s) => Math.max(1, Math.round(s / 60)) + ' min';
   const clock = (s) => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
     return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
@@ -79,7 +102,18 @@
   const pos = (e) => S.positions[e.id] || 0;
   const progress = (e) => S.finished.includes(e.id) ? 1 : (e.dur ? Math.min(pos(e) / e.dur, 1) : 0);
   const isSaved = (e) => S.saved.includes(e.id);
-  const tile = (e, size) => `<div class="tile" style="width:${size}px;height:${size}px;background:${ser(e).tint};font-size:${size > 48 ? 15 : 13}px">${ser(e).badge}</div>`;
+  const tile = (e, size) => e.art
+    ? `<img src="${esc(e.art)}" alt="" loading="lazy" style="width:${size}px;height:${size}px;border-radius:12px;object-fit:cover;flex:none;background:var(--fill)">`
+    : `<div class="tile" style="width:${size}px;height:${size}px;background:${e.tint || ser(e).tint};font-size:${size > 48 ? 15 : 13}px">${esc(e.badge || ser(e).badge)}</div>`;
+  const plTile = (p, size) => p.artwork
+    ? `<img src="${esc(p.artwork)}" alt="" loading="lazy" style="width:${size}px;height:${size}px;border-radius:16px;object-fit:cover;display:block;background:var(--fill)">`
+    : `<div style="width:${size}px;height:${size}px;border-radius:16px;background:${p.color};color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:flex-end">
+        <b style="font-size:${p.category === 'daf' ? 34 : 24}px;line-height:1;font-weight:800">${esc(p.badge)}</b>${p.category === 'daf' ? `<span style="font-size:14px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.short)}</span>` : ''}</div>`;
+  const plName = (p) => p.category === 'daf' ? p.short : p.title;
+  const plCard = (p, w) => `<button data-act="go" data-arg="pl:${p.id}" style="width:${w ? w + 'px' : '100%'};display:flex;flex-direction:column;gap:6px;text-align:left">
+      ${w ? plTile(p, w) : `<div style="width:100%;aspect-ratio:1">${plTile(p, '100%').replace(/width:100%px;height:100%px/, 'width:100%;height:100%')}</div>`}
+      <span style="font-size:14px;line-height:18px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(plName(p))}</span>
+      <span class="row-meta" style="margin-top:-4px">${p.trackCount} shiurim</span></button>`;
 
   const I = {
     search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
@@ -166,8 +200,9 @@
           <span class="row-meta">${fmtMin(e.dur - pos(e))} left</span><div class="bar"><i style="width:${Math.round(progress(e) * 100)}%"></i></div></div>
         <button class="icon-btn" style="width:40px;height:40px;background:var(--accent);color:#fff" data-act="play" data-arg="${e.id}" aria-label="Resume ${esc(e.title)}">${I.play(16)}</button>
       </div>`).join('')}</div>` : ''}
-      <div class="sec-head"><h2 class="h2">Playlists</h2><button class="link" data-act="tab" data-arg="series">See all</button></div>
-      <div class="hscroll">${SERIES_ORDER.slice(0, 5).map((k) => { const s = SERIES[k]; return `<button style="width:132px;display:flex;flex-direction:column;gap:6px;text-align:left" data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}">
+      <div class="sec-head"><h2 class="h2">Playlists</h2><button class="link" data-act="tab" data-arg="series">See all${PL ? ' ' + PL.playlists.length : ''}</button></div>
+      ${PL ? `<div class="hscroll">${PL.playlists.slice().sort((a, b) => (b.lastModified || '').localeCompare(a.lastModified || '')).slice(0, 8).map((p) => plCard(p, 132)).join('')}</div>` : ''}
+      <div class="hscroll" style="${PL ? 'display:none' : ''}">${SERIES_ORDER.slice(0, 5).map((k) => { const s = SERIES[k]; return `<button style="width:132px;display:flex;flex-direction:column;gap:6px;text-align:left" data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}">
         <div style="width:132px;height:132px;border-radius:16px;background:${s.tint};color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:space-between">
           <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:11px;letter-spacing:.08em;opacity:.85">${s.badge}</b>${k === 'daf' && S.follow ? '<span style="height:20px;padding:0 7px;border-radius:10px;background:#fff;color:#111827;font-size:11px;font-weight:800;display:flex;align-items:center">1 new</span>' : ''}</div>
           <span style="font-size:17px;line-height:20px;font-weight:800">${esc(s.short)}</span></div>
@@ -286,7 +321,38 @@
     ${searchBtn()}</div>`;
   };
 
-  screens.series = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="series">
+  screens.series = () => PL ? seriesSections() : seriesFallback();
+  const seriesSections = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="series">
+    <div class="pad"><h1 class="title">Series</h1><p class="sub">${PL.playlists.length} playlists · ${PL.playlists.reduce((n, p) => n + p.trackCount, 0).toLocaleString()} shiurim</p></div>
+    ${PL.categories.map((c) => { const items = PL.playlists.filter((p) => p.category === c.id); if (!items.length) return '';
+      return `<div class="sec-head" style="margin-top:26px"><h2 class="h2">${esc(c.title)} <span class="muted" style="font-size:15px;font-weight:500">${items.length}</span></h2>${items.length > 3 ? `<button class="link" data-act="go" data-arg="section:${c.id}">See all</button>` : ''}</div>
+        <div class="hscroll" style="align-items:flex-start">${items.map((p) => plCard(p, 140)).join('')}</div>`; }).join('')}
+    <h2 class="h2 pad" style="margin-top:28px;margin-bottom:6px">By speaker</h2>
+    <div class="pad">${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:62px;border-bottom:1px solid var(--sep);text-align:left">
+      <div style="width:40px;height:40px;border-radius:20px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}</div>
+  </div></div>${searchBtn()}</div>`;
+  screens.section = (id) => { const c = PL && PL.categories.find((x) => x.id === id); if (!c) return seriesFallback();
+    return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="section-${id}" style="padding-top:calc(var(--top) - 4px)">
+      <div class="pad">${backBtn('Series')}<h1 class="title" style="margin:4px 0 16px">${esc(c.title)}</h1>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px">${PL.playlists.filter((p) => p.category === id).map((p) => plCard(p, 0)).join('')}</div></div>
+    </div>${searchBtn()}</div>`; };
+  screens.pl = (id) => { const p = plById[id]; if (!p) return seriesFallback();
+    const eps = S.plOldest ? p.eps.slice().reverse() : p.eps;
+    return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="pl-${id}" style="padding-top:calc(var(--top) - 4px)">
+      <div class="pad">${backBtn('Series')}
+        <div style="display:flex;gap:16px;align-items:flex-end;margin-top:8px">${plTile(p, 120)}
+          <div style="flex:1;min-width:0"><span class="label" style="font-size:11px">${esc((PL.categories.find((c) => c.id === p.category) || {}).title || '')}</span>
+            <h1 style="font-size:24px;line-height:29px;font-weight:800;letter-spacing:-.01em;margin-top:2px">${esc(plName(p))}</h1>
+            <p class="row-meta" style="font-size:13px;margin-top:4px">${p.trackCount} shiurim${p.lastModified ? ' · updated ' + fmtDate(p.lastModified) : ''}</p></div></div>
+        <div style="display:flex;gap:8px;margin-top:16px">${eps[0] ? `<button class="pill solid" style="flex:1" data-act="play" data-arg="${(S.plOldest ? eps[0] : p.eps[0]).id}">${I.play(16)}${S.plOldest ? 'Play from the start' : 'Play latest'}</button>` : ''}
+          <button class="pill fill" data-act="plOrder">${I.sort}${S.plOldest ? 'Oldest first' : 'Newest first'}</button>
+          ${p.link ? `<a class="pill fill" style="padding:0 14px" href="${esc(p.link)}" target="_blank" rel="noopener" aria-label="Open on SoundCloud">${I.share}</a>` : ''}</div>
+      </div>
+      <div style="margin-top:10px">${eps.slice(0, S.plShow || 60).map(epRow).join('')}</div>
+      ${eps.length > (S.plShow || 60) ? `<div class="pad" style="margin-top:12px"><button class="pill fill" style="width:100%" data-act="plMore">Show more (${eps.length - (S.plShow || 60)} left)</button></div>` : ''}
+    </div>${searchBtn()}</div>`; };
+  const seriesFallback = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="series">
     <div class="pad"><h1 class="title">Series</h1><p class="sub" style="margin-bottom:18px">Browse shiurim by playlist</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${SERIES_ORDER.map((k) => { const s = SERIES[k]; return `<button data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}" style="height:168px;border-radius:18px;padding:14px;background:${s.tint};color:#fff;display:flex;flex-direction:column;justify-content:space-between;text-align:left">
       <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${s.badge}</div>
@@ -413,12 +479,16 @@
     }
     const has = (...xs) => xs.some((x) => String(x).toLowerCase().includes(q));
     const want = (k) => S.scope === 'all' || S.scope === k;
-    const pls = Object.entries(SERIES).filter(([k, s]) => k !== 'other' && has(s.name, s.sub));
+    const pls = PL ? [] : Object.entries(SERIES).filter(([k, s]) => k !== 'other' && has(s.name, s.sub));
+    const realPls = PL ? PL.playlists.filter((p) => has(p.title)) : [];
     const mas = Object.values(MASECHTOS).filter((m) => has(m.name, 'daf yomi'));
-    const eps = EP.filter((e) => has(e.title, e.speaker));
+    const eps = (PL ? Object.values(byId) : EP).filter((e) => has(e.title, e.speaker)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const spk = SPEAKERS.filter((p) => has(p.name, p.topics));
     let out = '';
-    if (want('playlists') && (pls.length || mas.length)) {
+    if (want('playlists') && realPls.length) {
+      out += `<p class="label" style="margin:8px 16px 4px">Playlists</p>` + realPls.slice(0, 12).map((p) => `<button data-act="go" data-arg="pl:${p.id}" class="row" style="width:100%;text-align:left">${plTile(p, 48)}<div class="row-text"><span class="row-title">${esc(plName(p))}</span><span class="row-meta">${esc((PL.categories.find((c) => c.id === p.category) || {}).title)} · ${p.trackCount} shiurim</span></div>${I.chev}</button>`).join('');
+    }
+    if (want('playlists') && !PL && (pls.length || mas.length)) {
       out += `<p class="label" style="margin:8px 16px 4px">Playlists</p>` + pls.map(([k, s]) => `<button data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}" class="row" style="width:100%;text-align:left">${'<div class="tile" style="width:48px;height:48px;background:' + s.tint + '">' + s.badge + '</div>'}<div class="row-text"><span class="row-title">${esc(s.name)}</span><span class="row-meta">Playlist · ${esc(s.total)}</span></div>${I.chev}</button>`).join('')
         + mas.map((m) => `<button data-act="go" data-arg="masechta:${m.key}" class="row" style="width:100%;text-align:left"><div class="tile" style="width:48px;height:48px;background:var(--accent)">${m.key === 'current' ? 'DY' : m.num}</div><div class="row-text"><span class="row-title">${esc(m.name)}</span><span class="row-meta">Daf Yomi masechta · ${m.last - 1} dafim</span></div>${I.chev}</button>`).join('');
     }
@@ -517,7 +587,7 @@
   const go = (where) => { S.stack.push(where); if (where.startsWith('masechta')) S.masShown = null; render(); };
   const A = {
     tab: (k) => { S.tab = k; S.stack = []; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
-    go: (w) => go(w),
+    go: (w) => { S.plShow = 60; S.plOldest = false; go(w); },
     back: () => { S.stack.pop(); S.sel = null; render(); },
     play: (id) => playEpisode(id),
     toggle: () => { if (!audio.src && S.current) return playEpisode(S.current); audio.paused ? audio.play().catch(() => {}) : audio.pause(); },
@@ -536,6 +606,8 @@
     theme: () => { S.theme = { system: 'light', light: 'dark', dark: 'system' }[S.theme]; applyTheme(); persist(); render(); },
     searchFor: (q) => { S.query = q; if (route()[0] === 'search') { render(); } else go('search'); },
     scope: (k) => { S.scope = k; render(); },
+    plOrder: () => { S.plOldest = !S.plOldest; S.plShow = 60; render(); },
+    plMore: () => { S.plShow = (S.plShow || 60) + 100; render(); },
     mas: (k) => { S.mas = k; S.masShown = k; S.sel = null; S.stack[S.stack.length - 1] = 'masechta:' + k; const st = app.querySelector('.scroll'); if (st) st.scrollTop = 0; render(); },
     sel: (d) => { S.sel = +d || null; render(); },
     learned: () => { const base = MASECHTOS[S.mas]; const ov = Object.assign({}, S.overrides[base.key]); const p = (S.sel in ov) ? ov[S.sel] : (base.progress[S.sel] || 0);
@@ -559,4 +631,5 @@
     const fn = A[el.dataset.act]; if (fn) { ev.preventDefault(); fn(el.dataset.arg); }
   });
   render();
+  loadPlaylists();
 })();

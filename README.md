@@ -16,3 +16,4 @@ On iPhone, open the link in Safari, tap **Share → Add to Home Screen**, and it
 - `data.js` is a snapshot of the latest 60 shiurim from the feed. Listening history, the streak and masechta progress are sample data.
 - Saved shiurim, listening positions and settings are kept in this browser only.
 - Plain HTML, CSS and JavaScript, with no build step. `render-icons.js` regenerates the PNG icons from `icon.svg`.
+- The Series tab loads all SoundCloud playlists live from `data/playlists.json` in the [hashevaynu-ios](https://github.com/designbydaniel1/hashevaynu-ios) repo, which a GitHub Action refreshes every 6 hours. Without a connection it falls back to the built-in snapshot.
