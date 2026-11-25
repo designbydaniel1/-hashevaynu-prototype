@@ -25,6 +25,14 @@
           return e;
         }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       });
+      // Newest daf from the live playlists, in case it is newer than the built-in snapshot.
+      const dp = d.playlists.find((p) => p.category === 'daf');
+      const latest = dp && dp.eps[0];
+      const parsed = latest && parseDaf(latest.title);
+      if (parsed && parsed.mas === today.mas && (latest.date || '') > ((todayDaf && todayDaf.date) || '')) {
+        todayDaf = latest; today = parsed; dafEps = dp.eps;
+        cur.released = cur.today = parsed.daf; cur.progress[parsed.daf - 1] = cur.progress[parsed.daf - 1] || 0.4;
+      }
       PL = d; render();
     }).catch(() => { /* offline: keep the built-in series */ });
   }
@@ -45,10 +53,10 @@
   ];
   const MASECHTA_LEN = { Eirachin: 34, Temurah: 34, Kerisus: 28, Meilah: 22, Kinnim: 25, Tamid: 33, Middos: 37, Niddah: 73, Bechoros: 61, Chullin: 142, Menachos: 110 };
 
-  const dafEps = EP.filter((e) => e.series === 'daf');
-  const todayDaf = dafEps[0];
+  let dafEps = EP.filter((e) => e.series === 'daf');
+  let todayDaf = dafEps[0];
   const parseDaf = (t) => { const m = /^([A-Za-z’']+)\s+(\d+)/.exec(t || ''); return m ? { mas: m[1], daf: +m[2] } : null; };
-  const today = parseDaf(todayDaf && todayDaf.title) || { mas: 'Eirachin', daf: 6 };
+  let today = parseDaf(todayDaf && todayDaf.title) || { mas: 'Eirachin', daf: 6 };
 
   const fill = (from, to, v, m) => { for (let d = from; d <= to; d++) m[d] = v; return m; };
   const cur = { key: 'current', name: today.mas, num: 33, last: MASECHTA_LEN[today.mas] || 34, released: today.daf, today: today.daf,
@@ -186,7 +194,7 @@
   screens.main = () => {
     const cont = EP.filter((e) => { const p = progress(e); return p > 0 && p < 1; }).slice(0, 6);
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="main">
-      <div class="pad" style="padding-right:64px"><h1 class="title">Hashevaynu</h1><p class="sub">Shiurim from Rabbi Avi Zakutinsky and R’ Dov Elias</p></div>
+      <div class="pad" style="padding-right:64px"><h1 class="title">Hashevaynu</h1><p class="sub">${PL ? PL.playlists.length + ' playlists · ' + PL.playlists.reduce((n, p) => n + p.trackCount, 0).toLocaleString() + ' shiurim' : 'Shiurim from Rabbi Avi Zakutinsky and R’ Dov Elias'}</p></div>
       ${todayDaf ? `<div class="pad" style="margin-top:16px"><div class="card-accent">
         <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85"><b style="letter-spacing:.08em;text-transform:uppercase">Today’s Daf</b><span>${fmtDate(todayDaf.date)} · ${fmtMin(todayDaf.dur)}</span></div>
         <div style="font-size:24px;line-height:30px;font-weight:800;letter-spacing:-.01em">${esc(todayDaf.title.replace(' (Daf Yomi)', ''))}</div>
@@ -209,7 +217,7 @@
         <span class="mini-title">${esc(s.name)}</span><span class="row-meta" style="margin-top:-5px">${k === 'daf' && S.follow ? 'Following · ' : ''}${s.total}</span></button>`; }).join('')}</div>
       <div class="sec-head"><h2 class="h2">Latest shiurim</h2></div>
       ${EP.slice(0, 20).map(epRow).join('')}
-    </div>${searchBtn()}</div>`;
+    ${searchBtn()}</div></div>`;
   };
 
   screens.daf = () => {
@@ -219,7 +227,7 @@
     const stats = (m) => { let n = 0; const ov = S.overrides[m.key] || {}; for (let d = 2; d <= m.last; d++) if (((d in ov) ? ov[d] : (m.progress[d] || 0)) >= 1) n++; return n; };
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="daf">
       <div class="pad" style="padding-right:64px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
-        <div><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky · a new daf every day</p></div>
+        <div><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>
         <a class="icon-btn" href="https://chat.whatsapp.com/GQ7aFSgUHTTI7say5d1Tyc" target="_blank" rel="noopener" aria-label="Join the Daf WhatsApp group">${I.bell}</a>
       </div>
       ${todayDaf ? `<div class="pad" style="margin-top:16px"><div class="card-accent" style="border-radius:22px;padding:20px;gap:14px">
@@ -257,7 +265,7 @@
       <div class="pad" style="margin-top:20px"><a href="https://www.hashevaynu.org/donate" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;border:1px solid var(--border)">
         <div style="width:40px;height:40px;border-radius:20px;background:var(--save-bg);color:var(--save);display:flex;align-items:center;justify-content:center">${I.heart}</div>
         <div style="flex:1"><div style="font-size:15px;font-weight:700">Sponsor the Daf</div><div class="row-meta">$36/week or $100/month</div></div>${I.chev}</a></div>
-    </div>${searchBtn()}</div>`;
+    ${searchBtn()}</div></div>`;
   };
 
   screens.masechta = (key) => {
@@ -310,7 +318,7 @@
         <span style="display:flex;align-items:center;gap:5px"><b style="font-size:10px;color:var(--accent-text)">2×</b>Reviewed</span></div>
       <div class="dafgrid">${cells.join('')}</div>
       <p class="pad row-meta" style="margin-top:14px;line-height:18px">Tap any daf to play it or mark it learned. Learn in any order: the map fills in wherever you listen.</p>
-    </div>${card}
+    ${searchBtn()}</div>${card}
     ${S.siyum ? `<div class="overlay"><div class="dialog" role="dialog" aria-label="Siyum">
       ${Array.from({ length: 16 }, (_, i) => `<span class="confetti" aria-hidden="true" style="left:${(i * 37) % 92 + 3}%;top:${(i * 53) % 30 + 4}%;width:${6 + (i % 3) * 2}px;height:${6 + (i % 3) * 2}px;background:${colors[i % 6]};transform:rotate(${i * 47}deg);animation-delay:${i * 40}ms"></span>`).join('')}
       <div style="width:76px;height:76px;border-radius:38px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center">${I.trophy(38)}</div>
@@ -318,7 +326,7 @@
       <p class="muted" style="font-size:15px;line-height:22px">You learned all ${total} dafim. Mazal tov!</p>
       <div style="margin-top:8px;width:100%;display:flex;gap:8px"><button class="pill solid" style="flex:1" data-act="shareText" data-arg="I just finished Maseches ${esc(base.name)} with Hashevaynu Daf Yomi!">Share the simcha</button>
         <button class="pill fill" style="flex:1" data-act="siyum" data-arg="0">Close</button></div></div></div>` : ''}
-    ${searchBtn()}</div>`;
+    </div>`;
   };
 
   screens.series = () => PL ? seriesSections() : seriesFallback();
@@ -331,12 +339,12 @@
     <div class="pad">${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:62px;border-bottom:1px solid var(--sep);text-align:left">
       <div style="width:40px;height:40px;border-radius:20px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>
       <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}</div>
-  </div></div>${searchBtn()}</div>`;
+  </div>${searchBtn()}</div></div>`;
   screens.section = (id) => { const c = PL && PL.categories.find((x) => x.id === id); if (!c) return seriesFallback();
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="section-${id}" style="padding-top:calc(var(--top) - 4px)">
       <div class="pad">${backBtn('Series')}<h1 class="title" style="margin:4px 0 16px">${esc(c.title)}</h1>
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px">${PL.playlists.filter((p) => p.category === id).map((p) => plCard(p, 0)).join('')}</div></div>
-    </div>${searchBtn()}</div>`; };
+    ${searchBtn()}</div></div>`; };
   screens.pl = (id) => { const p = plById[id]; if (!p) return seriesFallback();
     const eps = S.plOldest ? p.eps.slice().reverse() : p.eps;
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="pl-${id}" style="padding-top:calc(var(--top) - 4px)">
@@ -351,7 +359,7 @@
       </div>
       <div style="margin-top:10px">${eps.slice(0, S.plShow || 60).map(epRow).join('')}</div>
       ${eps.length > (S.plShow || 60) ? `<div class="pad" style="margin-top:12px"><button class="pill fill" style="width:100%" data-act="plMore">Show more (${eps.length - (S.plShow || 60)} left)</button></div>` : ''}
-    </div>${searchBtn()}</div>`; };
+    ${searchBtn()}</div></div>`; };
   const seriesFallback = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="series">
     <div class="pad"><h1 class="title">Series</h1><p class="sub" style="margin-bottom:18px">Browse shiurim by playlist</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${SERIES_ORDER.map((k) => { const s = SERIES[k]; return `<button data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}" style="height:168px;border-radius:18px;padding:14px;background:${s.tint};color:#fff;display:flex;flex-direction:column;justify-content:space-between;text-align:left">
@@ -361,7 +369,7 @@
     ${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:62px;border-bottom:1px solid var(--sep);text-align:left">
       <div style="width:40px;height:40px;border-radius:20px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>
       <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}
-    </div></div>${searchBtn()}</div>`;
+    </div>${searchBtn()}</div></div>`;
 
   screens.playlist = (k) => {
     const s = SERIES[k] || SERIES.other;
@@ -375,7 +383,7 @@
       </div>
       <p class="label" style="margin:16px 16px 4px">${eps.length} recent shiurim</p>
       ${eps.map(epRow).join('') || '<p class="pad muted" style="margin-top:12px">No recent shiurim in this playlist.</p>'}
-    </div>${searchBtn(true)}</div>`;
+    ${searchBtn(true)}</div></div>`;
   };
 
   screens.saved = () => {
@@ -385,7 +393,7 @@
       ${items.length ? items.map(epRow).join('') : `<div style="margin-top:110px;padding:0 40px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
         <div style="width:72px;height:72px;border-radius:36px;background:var(--save-bg);color:var(--save);display:flex;align-items:center;justify-content:center">${I.bookmark(false, 32)}</div>
         <h2 style="font-size:20px;font-weight:700;margin-top:6px">Nothing saved yet</h2><p class="muted" style="font-size:15px;line-height:22px">Tap the bookmark on any shiur to save it for later.</p></div>`}
-    </div>${searchBtn()}</div>`;
+    ${searchBtn()}</div></div>`;
   };
 
   const MORE = () => [
@@ -421,7 +429,7 @@
       return act === 'url' ? `<a class="group-row" href="${esc(arg)}" target="_blank" rel="noopener">${inner}</a>` : `<button class="group-row" data-act="${act}" data-arg="${esc(arg)}">${inner}</button>`; }).join('')}</div>`).join('')}
     <p class="row-meta" style="margin:22px 4px 0;line-height:18px">Hashevaynu is a 501(c)(3) non-profit. Tax ID 11-3295965. 144-49 72nd Dr, Flushing, NY 11367.</p>
     <p class="row-meta" style="margin:10px 4px 0;line-height:18px">This is a design preview of the Hashevaynu app. Shiurim play from the Hashevaynu SoundCloud feed.</p>
-  </div></div>${searchBtn()}</div>`;
+  </div>${searchBtn()}</div></div>`;
 
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Shabbos'];
   const TIMES = [['Morning', '8:00 AM'], ['Afternoon', '1:00 PM'], ['Evening', '8:00 PM']];
@@ -457,7 +465,7 @@
       <div class="group" style="padding:14px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:20px">
         ${['At most 2 notifications a day, and only on the days you picked', 'Several uploads in one day arrive as one roundup', 'On quiet days you may get a gentle nudge to finish a shiur or keep your streak', 'Nothing between 10 PM and 7 AM, or on Shabbos and Yom Tov. A catch-up arrives Motzei Shabbos'].map((t) =>
           `<div style="display:flex;gap:10px"><span style="color:var(--on);margin-top:2px">${I.check(16)}</span><span>${t}</span></div>`).join('')}</div>
-    </div></div>${searchBtn()}</div>`;
+    </div>${searchBtn()}</div></div>`;
   };
 
   screens.search = () => `<div class="screen"><div style="position:absolute;left:0;right:0;top:0;padding:var(--top) 16px 10px;background:var(--bg);z-index:2;display:flex;flex-direction:column;gap:12px">
