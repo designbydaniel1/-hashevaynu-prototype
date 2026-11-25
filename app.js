@@ -251,13 +251,13 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
       ${dafTabs('map')}
       <p class="pad row-meta" style="font-size:13px;margin:16px 0 6px">${Object.keys(MASECHTOS).length} masechtos · tap one to see your progress on every daf</p>
       ${Object.values(MASECHTOS).map((m) => { const st = masStats(m), active = m.key === 'current', done = st.n === st.total, pct = Math.round(st.n / st.total * 100);
-        const [label, color] = active ? ['Learning now', 'var(--accent-text)'] : done ? ['Siyum', 'var(--on)'] : st.n || st.started ? ['In progress', 'var(--accent-text)'] : ['Not started', 'var(--text2)'];
-        return `<button data-act="openMap" data-arg="${m.key}" aria-label="${esc(m.name)}, ${label}, ${st.n} of ${st.total} dafim learned" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--sep);text-align:left">
+        const [label, color] = active ? ['Learning now', 'var(--accent-text)'] : done ? ['Siyum', 'var(--on)'] : st.n || st.started ? ['In progress', 'var(--accent-text)'] : [st.total + ' dafim', 'var(--text2)'];
+        return `<button data-act="openMap" data-arg="${m.key}" aria-label="${esc(m.name)}, ${st.n || st.started ? label + ', ' + st.n + ' of ' + st.total + ' dafim learned' : st.total + ' dafim'}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--sep);text-align:left">
           <div class="tile" style="width:44px;height:44px;border-radius:12px;background:${active ? 'var(--accent)' : done ? 'var(--on)' : 'var(--fill)'};color:${active || done ? '#fff' : 'var(--text2)'};font-size:14px">${done ? I.check(18) : m.num}</div>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:16px;font-weight:600">${esc(m.name)}</span>${st.started ? `<span style="font-size:12px;font-weight:600;color:var(--text2)">${st.started} started</span>` : ''}</div>
             ${st.n || st.started ? `<div class="bar"><i style="width:${pct}%;${done ? 'background:var(--on)' : ''}"></i></div>` : ''}
-            <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="font-weight:700;color:${color}">${label}</span><span class="muted">${st.n || st.started ? st.n + ' of ' + st.total + ' dafim' : st.total + ' dafim'}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="font-weight:${st.n || st.started || active ? 700 : 500};color:${color}">${label}</span><span class="muted">${st.n || st.started ? st.n + ' of ' + st.total + ' dafim' : ''}</span></div>
           </div>${I.chev}</button>`; }).join('')}
     ${searchBtn()}</div></div>`;
   const dafToday = () => {
