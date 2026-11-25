@@ -22,6 +22,7 @@
             series: SERIES_OF[p.category] || (/mishnah berurah/i.test(p.title) ? 'mb' : /moonlight/i.test(p.title) ? 'me' : 'other'),
             speaker: /dov elias/i.test(p.title + t.title) ? 'R’ Dov Elias' : 'Rabbi Avi Zakutinsky' };
           if (!known) { if (e.series === 'other') { e.badge = p.badge; e.tint = p.color; } e.art = t.artwork || p.artwork; byId[t.id] = e; }
+          e.cover = e.cover || t.artwork || p.artwork || d.avatar;
           return e;
         }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       });
@@ -594,13 +595,14 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     const e = byId[S.current]; if (!e) return '';
     const s = ser(e), t = audio.currentTime || pos(e), d = audio.duration || e.dur, saved = isSaved(e);
     const dl = S.dl[e.id] || 0;
-    return `<div class="sheet${enter('sheet', true)}" id="sheet" role="dialog" aria-label="Now playing">
+    return `<div class="sheet${enter('sheet', true)}" id="sheet" role="dialog" aria-label="Now playing"><span class="grabber" aria-hidden="true"></span>
       <div style="width:100%;display:flex;align-items:center;justify-content:space-between">
         <button class="icon-btn" style="background:none;margin-left:-10px" data-act="closePlayer" aria-label="Close player">${I.down}</button>
         <span class="label">${esc(s.name)}</span><span style="width:44px"></span></div>
-      <div class="art ${S.playing ? '' : 'paused'}" style="margin-top:12px;background:${s.tint}">
+      ${e.cover ? `<img class="art ${S.playing ? '' : 'paused'}" src="${esc(e.cover)}" alt="Artwork for ${esc(e.title)}" style="margin-top:12px;padding:0;object-fit:cover;background:var(--fill)">`
+        : `<div class="art ${S.playing ? '' : 'paused'}" style="margin-top:12px;background:${e.tint || s.tint}">
         <b style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;opacity:.85">Hashevaynu · ${esc(s.short)}</b>
-        <div><div style="font-size:30px;line-height:34px;font-weight:800;letter-spacing:-.02em">${esc(e.title.replace(' (Daf Yomi)', '').replace(/^(Mishnah Berurah Yomi|Semicha Shiurim): /, ''))}</div><div style="font-size:15px;opacity:.85;margin-top:6px">${esc(e.speaker)}</div></div></div>
+        <div><div style="font-size:30px;line-height:34px;font-weight:800;letter-spacing:-.02em">${esc(e.title.replace(' (Daf Yomi)', '').replace(/^(Mishnah Berurah Yomi|Semicha Shiurim): /, ''))}</div><div style="font-size:15px;opacity:.85;margin-top:6px">${esc(e.speaker)}</div></div></div>`}
       <div style="margin-top:24px;width:100%;text-align:center"><h1 style="font-size:20px;line-height:26px;font-weight:700">${esc(e.title)}</h1><p class="muted" style="font-size:15px;margin-top:4px">${esc(e.speaker)} · ${fmtDate(e.date)}</p></div>
       <div style="margin-top:18px;width:100%">
         <input id="scrub" class="scrub" type="range" min="0" max="${Math.round(d)}" value="${Math.round(t)}" style="--p:${d ? t / d * 100 : 0}%" aria-label="Playback position">
@@ -641,6 +643,34 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     const sc = document.getElementById('scrub');
     if (sc) sc.addEventListener('input', () => { audio.currentTime = +sc.value; tick(); });
   }
+  // Drag the player down to minimize it, like an iOS bottom sheet.
+  let drag = null;
+  app.addEventListener('touchstart', (ev) => {
+    const sh = ev.target.closest('#sheet');
+    if (!sh || ev.target.closest('input[type=range]') || sh.scrollTop > 0) return;
+    drag = { sh, y: ev.touches[0].clientY, t: Date.now(), dy: 0 };
+  }, { passive: true });
+  app.addEventListener('touchmove', (ev) => {
+    if (!drag) return;
+    drag.dy = Math.max(0, ev.touches[0].clientY - drag.y);
+    drag.sh.style.transition = 'none';
+    drag.sh.style.transform = `translateY(${drag.dy}px)`;
+    drag.sh.style.borderRadius = drag.dy ? '28px 28px 0 0' : '';
+  }, { passive: true });
+  app.addEventListener('touchend', () => {
+    if (!drag) return;
+    const { sh, dy, t } = drag; drag = null;
+    const fast = dy / Math.max(1, Date.now() - t) > 0.6;
+    if (dy > 140 || (fast && dy > 40)) {
+      sh.style.transition = 'transform 240ms cubic-bezier(0.22, 1, 0.36, 1)';
+      sh.style.transform = 'translateY(100%)';
+      setTimeout(() => { S.playerOpen = false; render(); }, 230);
+    } else {
+      sh.style.transition = 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)';
+      sh.style.transform = ''; sh.style.borderRadius = '';
+    }
+  });
+
   // Pull down at the top of a tab to check for new shiurim and playlists.
   let pull = null;
   app.addEventListener('touchstart', (ev) => {

@@ -177,3 +177,7 @@ input[type=range].scrub::-moz-range-thumb { width: 16px; height: 16px; border: 0
 .icon-row-btn { height: 52px; border-radius: 16px; background: var(--fill); color: var(--text); display: flex; align-items: center; justify-content: center; }
 .mini-spin { width: 20px; height: 20px; border-radius: 10px; border: 2.5px solid var(--track); border-top-color: var(--accent-text); animation: spin 700ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Bottom-sheet grab handle on the player */
+.grabber { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; border-radius: 3px; background: var(--track); }
+img.art { display: block; }
