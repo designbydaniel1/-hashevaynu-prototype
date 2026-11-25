@@ -252,10 +252,6 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="pill white" data-act="play" data-arg="${todayDaf.id}">${todayPlaying ? I.pause(16) + 'Playing' : I.play(16) + 'Play today’s daf'}</button>
           <button class="pill ghost" data-act="dafMap" data-arg="current">Daf map</button></div>
       </div></div>` : ''}
-      <div class="pad" style="margin-top:12px"><a href="https://chat.whatsapp.com/GQ7aFSgUHTTI7say5d1Tyc" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:#15803D;color:#fff">
-        <div style="width:46px;height:46px;flex:none;border-radius:23px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center">${I.whatsapp(26)}</div>
-        <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">Join the Daf Yomi WhatsApp group</div><div style="font-size:13px;opacity:.9;margin-top:1px">Daily daf updates, schedule changes and sponsorships</div></div>
-        <span style="height:34px;padding:0 14px;border-radius:17px;background:#fff;color:#15803D;font-size:14px;font-weight:700;display:flex;align-items:center">Join</span></a></div>
       <div class="sec-head"><h2 class="h2">Latest dafim</h2><button class="link" data-act="dafMap" data-arg="current">Daf map</button></div>
       ${dafEps.slice(0, 6).map(epRow).join('')}
       ${PL ? (() => { const daf = PL.playlists.filter((p) => p.category === 'daf'); return `<div class="sec-head" style="margin-top:26px"><h2 class="h2">Daf Yomi series <span class="muted" style="font-size:15px;font-weight:500">${daf.length}</span></h2><button class="link" data-act="go" data-arg="section:daf">See all</button></div>
@@ -272,6 +268,10 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
       <div class="pad" style="margin-top:20px"><a href="https://www.hashevaynu.org/donate" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;border:1px solid var(--border)">
         <div style="width:40px;height:40px;border-radius:20px;background:var(--save-bg);color:var(--save);display:flex;align-items:center;justify-content:center">${I.heart}</div>
         <div style="flex:1"><div style="font-size:15px;font-weight:700">Sponsor the Daf</div><div class="row-meta">$36/week or $100/month</div></div>${I.chev}</a></div>
+      <div class="pad" style="margin-top:12px"><a href="https://chat.whatsapp.com/GQ7aFSgUHTTI7say5d1Tyc" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:#15803D;color:#fff">
+        <div style="width:46px;height:46px;flex:none;border-radius:23px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center">${I.whatsapp(26)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">Join the Daf Yomi WhatsApp group</div><div style="font-size:13px;opacity:.9;margin-top:1px">Daily daf updates, schedule changes and sponsorships</div></div>
+        <span style="height:34px;padding:0 14px;border-radius:17px;background:#fff;color:#15803D;font-size:14px;font-weight:700;display:flex;align-items:center">Join</span></a></div>
     ${searchBtn()}</div></div>`;
   };
 
