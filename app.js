@@ -255,9 +255,9 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
         return `<button data-act="openMap" data-arg="${m.key}" aria-label="${esc(m.name)}, ${label}, ${st.n} of ${st.total} dafim learned" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--sep);text-align:left">
           <div class="tile" style="width:44px;height:44px;border-radius:12px;background:${active ? 'var(--accent)' : done ? 'var(--on)' : 'var(--fill)'};color:${active || done ? '#fff' : 'var(--text2)'};font-size:14px">${done ? I.check(18) : m.num}</div>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:16px;font-weight:600">${esc(m.name)}</span><span style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${pct ? 'var(--text)' : 'var(--text2)'}">${pct}%</span></div>
-            <div class="bar"><i style="width:${pct}%;${done ? 'background:var(--on)' : ''}"></i></div>
-            <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="font-weight:700;color:${color}">${label}</span><span class="muted">${st.n} of ${st.total} dafim${st.started ? ' · ' + st.started + ' started' : ''}</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:16px;font-weight:600">${esc(m.name)}</span>${st.started ? `<span style="font-size:12px;font-weight:600;color:var(--text2)">${st.started} started</span>` : ''}</div>
+            ${st.n || st.started ? `<div class="bar"><i style="width:${pct}%;${done ? 'background:var(--on)' : ''}"></i></div>` : ''}
+            <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="font-weight:700;color:${color}">${label}</span><span class="muted">${st.n || st.started ? st.n + ' of ' + st.total + ' dafim' : st.total + ' dafim'}</span></div>
           </div>${I.chev}</button>`; }).join('')}
     ${searchBtn()}</div></div>`;
   const dafToday = () => {
