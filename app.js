@@ -12,7 +12,7 @@
   const plById = {};
   const SERIES_OF = { daf: 'daf' };
   function loadPlaylists() {
-    fetch(PLAYLISTS_URL, { cache: 'no-cache' }).then((r) => r.ok ? r.json() : null).then((d) => {
+    return fetch(PLAYLISTS_URL, { cache: 'no-cache' }).then((r) => r.ok ? r.json() : null).then((d) => {
       if (!d || !d.playlists) return;
       d.playlists.forEach((p) => {
         plById[p.id] = p;
@@ -83,13 +83,13 @@
     tab: 'main', stack: [], playerOpen: false, current: null, playing: false,
     saved: EP.filter((e, i) => i === 4 || i === 9).map((e) => e.id),
     positions: seedPositions, finished: dafEps.slice(3, 6).map((e) => e.id),
-    rate: 1, sleep: 0, dl: {}, smart: true, follow: true, remind: true, autodl: true,
+    rate: 1, sleep: 0, dl: {}, smart: true, alerts: true, follow: true, remind: true, autodl: true,
     theme: 'system', query: '', scope: 'all',
     mas: today.mas === 'Bechoros' ? 'current' : 'bechoros', sel: null, overrides: {}, siyum: false,
     notif: { freq: '3', days: [0, 2, 4], time: 2, news: true, events: true, daf: true, sponsor: false }
   }, saved0, { stack: [], playerOpen: false, playing: false, sel: null, siyum: false, query: '' });
   const persist = () => {
-    const keep = ['saved', 'positions', 'finished', 'rate', 'smart', 'follow', 'remind', 'autodl', 'theme', 'notif', 'overrides', 'current', 'dl'];
+    const keep = ['alerts', 'saved', 'positions', 'finished', 'rate', 'smart', 'follow', 'remind', 'autodl', 'theme', 'notif', 'overrides', 'current', 'dl'];
     try { localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(keep.map((k) => [k, S[k]])))); } catch (e) { /* storage unavailable */ }
   };
   const applyTheme = () => {
@@ -138,6 +138,7 @@
     wave: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h3l2-5 3 10 2-5h6"/></svg>',
     check: (s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
     bell: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+    whatsapp: (sz = 26) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 1.8a8.2 8.2 0 1 1-4.2 15.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 0 1 12 3.8zm-3.3 4.4c-.2 0-.5 0-.7.3-.3.3-1 .9-1 2.3s1 2.7 1.2 2.9c.1.2 2 3.1 4.9 4.3 2.4 1 2.9.8 3.4.7.5 0 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3l-1.9-.9c-.3-.1-.4-.1-.6.1l-.8 1c-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.4.1-.6l.4-.5.3-.5v-.5l-.9-2.1c-.2-.5-.4-.5-.6-.5h-.5z"/></svg>`,
     heart: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg>',
     flame: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5c.5 3.2 4.5 5.6 4.5 10.2a4.5 4.5 0 0 1-9 0c0-1.8.8-3.3 1.8-4.3.2 1.6 1 2.6 2 2.9-.6-3 .2-6.3.7-8.8z"/></svg>',
     trophy: (s = 28) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>`,
@@ -188,6 +189,12 @@
     </div>`;
   };
 
+  /** Everything uploaded in the last 30 days, newest first. */
+  const recentShiurim = () => {
+    const cutoff = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    return (PL ? Object.values(byId) : EP).filter((e) => (e.date || '') >= cutoff).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  };
+
   // ---------- Screens ----------
   const screens = {};
 
@@ -215,8 +222,14 @@
           <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:11px;letter-spacing:.08em;opacity:.85">${s.badge}</b>${k === 'daf' && S.follow ? '<span style="height:20px;padding:0 7px;border-radius:10px;background:#fff;color:#111827;font-size:11px;font-weight:800;display:flex;align-items:center">1 new</span>' : ''}</div>
           <span style="font-size:17px;line-height:20px;font-weight:800">${esc(s.short)}</span></div>
         <span class="mini-title">${esc(s.name)}</span><span class="row-meta" style="margin-top:-5px">${k === 'daf' && S.follow ? 'Following · ' : ''}${s.total}</span></button>`; }).join('')}</div>
-      <div class="sec-head"><h2 class="h2">Latest shiurim</h2></div>
-      ${EP.slice(0, 20).map(epRow).join('')}
+      <div class="sec-head"><h2 class="h2">Latest shiurim</h2><span class="row-meta">Last 30 days</span></div>
+      ${recentShiurim().map(epRow).join('')}
+      <div class="pad" style="margin-top:24px"><div style="border-radius:20px;background:var(--fill);padding:20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+        <div style="width:48px;height:48px;border-radius:24px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center">${TABS[2][2].replace(/26/g, '24')}</div>
+        <h2 style="font-size:18px;font-weight:700;margin-top:4px">You’re all caught up</h2>
+        <p class="muted" style="font-size:14px;line-height:20px">That’s everything from the last 30 days. ${PL ? 'Browse ' + PL.playlists.length + ' playlists with ' + PL.playlists.reduce((n, p) => n + p.trackCount, 0).toLocaleString() + ' shiurim' : 'Browse every playlist'}, back to 2020.</p>
+        <button class="pill solid" style="margin-top:6px" data-act="tab" data-arg="series">Browse all series</button>
+      </div></div>
     ${searchBtn()}</div></div>`;
   };
 
@@ -226,10 +239,7 @@
     const dow = new Date().getDay();
     const stats = (m) => { let n = 0; const ov = S.overrides[m.key] || {}; for (let d = 2; d <= m.last; d++) if (((d in ov) ? ov[d] : (m.progress[d] || 0)) >= 1) n++; return n; };
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="daf">
-      <div class="pad" style="padding-right:64px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
-        <div><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>
-        <a class="icon-btn" href="https://chat.whatsapp.com/GQ7aFSgUHTTI7say5d1Tyc" target="_blank" rel="noopener" aria-label="Join the Daf WhatsApp group">${I.bell}</a>
-      </div>
+      <div class="pad" style="padding-right:64px"><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>
       ${todayDaf ? `<div class="pad" style="margin-top:16px"><div class="card-accent" style="border-radius:22px;padding:20px;gap:14px">
         <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85"><b style="letter-spacing:.08em;text-transform:uppercase">Today · ${fmtDate(todayDaf.date)}</b><span>${fmtMin(todayDaf.dur)}</span></div>
         <div><div style="font-size:15px;font-weight:600;opacity:.85">Maseches ${esc(today.mas)}</div><div style="font-size:34px;line-height:40px;font-weight:800;letter-spacing:-.02em">Daf ${today.daf}</div></div>
@@ -238,6 +248,10 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="pill white" data-act="play" data-arg="${todayDaf.id}">${todayPlaying ? I.pause(16) + 'Playing' : I.play(16) + 'Play today’s daf'}</button>
           <button class="pill ghost" data-act="go" data-arg="masechta:current">Daf map</button></div>
       </div></div>` : ''}
+      <div class="pad" style="margin-top:12px"><a href="https://chat.whatsapp.com/GQ7aFSgUHTTI7say5d1Tyc" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:#15803D;color:#fff">
+        <div style="width:46px;height:46px;flex:none;border-radius:23px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center">${I.whatsapp(26)}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">Join the Daf Yomi WhatsApp group</div><div style="font-size:13px;opacity:.9;margin-top:1px">Daily daf updates, schedule changes and sponsorships</div></div>
+        <span style="height:34px;padding:0 14px;border-radius:17px;background:#fff;color:#15803D;font-size:14px;font-weight:700;display:flex;align-items:center">Join</span></a></div>
       <div class="pad" style="margin-top:14px"><div style="border-radius:18px;border:1px solid var(--border);padding:14px 16px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;align-items:center;gap:12px">
           <div style="width:42px;height:42px;border-radius:21px;background:var(--save-bg);color:var(--save);display:flex;align-items:center;justify-content:center">${I.flame}</div>
@@ -398,7 +412,8 @@
 
   const MORE = () => [
     ['Settings', [
-      ['Notifications', S.notif.freq === 'off' ? 'Weekly updates off' : notifSummary(), 'N', '#DC2626', 'go', 'notifications'],
+      ['New shiur alerts', S.alerts ? 'On · once a day, when new shiurim are up' : 'Off', 'N', '#DC2626', 'switch', 'alerts'],
+      ['Notification center', 'Coming in Day 2 · preview the design', 'NC', '#64748B', 'go', 'notifications'],
       ['Appearance', { system: 'Match phone (light or dark)', light: 'Light', dark: 'Dark' }[S.theme], 'A', '#334155', 'theme', '']]],
     ['Announcements', [
       ['Announcements & Schedule', 'Join the Hashevaynu WhatsApp group', 'A', '#15803D', 'url', 'https://chat.whatsapp.com/L8jzrAuS89X3wQ9pT5zcR9'],
@@ -426,6 +441,7 @@
       <div style="flex:1"><div style="font-size:17px;font-weight:700">Support Hashevaynu</div><div style="font-size:13px;opacity:.88">Sponsor the Daf · $36/week or $100/month</div></div></a>
     ${MORE().map(([title, rows]) => `<h2 class="label" style="margin:22px 4px 8px">${title}</h2><div class="group">${rows.map(([t, d, g, bg, act, arg]) => {
       const inner = `<div class="glyph" style="background:${bg}">${g}</div><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:500">${esc(t)}</div>${d ? `<div class="row-meta">${esc(d)}</div>` : ''}</div>${I.chev}`;
+      if (act === 'switch') return `<div class="group-row">${inner.replace(I.chev, '')}<button class="switch" role="switch" aria-checked="${!!S[arg]}" aria-label="${esc(t)}" data-act="alertSwitch"></button></div>`;
       return act === 'url' ? `<a class="group-row" href="${esc(arg)}" target="_blank" rel="noopener">${inner}</a>` : `<button class="group-row" data-act="${act}" data-arg="${esc(arg)}">${inner}</button>`; }).join('')}</div>`).join('')}
     <p class="row-meta" style="margin:22px 4px 0;line-height:18px">Hashevaynu is a 501(c)(3) non-profit. Tax ID 11-3295965. 144-49 72nd Dr, Flushing, NY 11367.</p>
     <p class="row-meta" style="margin:10px 4px 0;line-height:18px">This is a design preview of the Hashevaynu app. Shiurim play from the Hashevaynu SoundCloud feed.</p>
@@ -439,7 +455,8 @@
     const n = S.notif;
     return `<div class="screen grouped"><div class="scroll" data-key="notifications" style="padding-top:calc(var(--top) - 4px)"><div class="pad">
       ${backBtn('More')}
-      <h1 class="title" style="margin-top:4px">Notifications</h1><p class="sub" style="margin-bottom:16px">Choose how often Hashevaynu reaches out</p>
+      <h1 class="title" style="margin-top:4px">Notifications</h1><p class="sub" style="margin-bottom:12px">Choose how often Hashevaynu reaches out</p>
+      <div style="margin-bottom:16px;padding:10px 12px;border-radius:12px;background:var(--unplayed);color:var(--accent-text);font-size:13px;font-weight:600">Day 2 preview. For now the app sends one alert a day when new shiurim are up.</div>
       <div style="padding:12px;border-radius:22px;background:var(--fill);display:flex;flex-direction:column;gap:6px"><span class="label" style="font-size:11px;padding:0 4px">Preview</span>
         <div style="padding:12px;border-radius:18px;background:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.12);display:flex;gap:10px">
           <div class="tile" style="width:38px;height:38px;border-radius:9px;background:var(--accent);font-size:17px">H</div>
@@ -552,6 +569,37 @@
     const sc = document.getElementById('scrub');
     if (sc) sc.addEventListener('input', () => { audio.currentTime = +sc.value; tick(); });
   }
+  // Pull down at the top of a tab to check for new shiurim and playlists.
+  let pull = null;
+  app.addEventListener('touchstart', (ev) => {
+    const sc = ev.target.closest('.scroll[data-key]');
+    if (sc && sc.scrollTop <= 0 && !S.playerOpen) pull = { sc, y: ev.touches[0].clientY, dy: 0 };
+  }, { passive: true });
+  app.addEventListener('touchmove', (ev) => {
+    if (!pull) return;
+    pull.dy = Math.max(0, ev.touches[0].clientY - pull.y);
+    const d = Math.min(pull.dy * 0.5, 80);
+    pull.sc.style.transform = `translateY(${d}px)`;
+    let ind = document.getElementById('ptr');
+    if (!ind) { ind = document.createElement('div'); ind.id = 'ptr'; ind.className = 'ptr'; app.appendChild(ind); }
+    ind.style.opacity = Math.min(1, d / 60); ind.style.transform = `translateX(-50%) rotate(${d * 4}deg)`;
+  }, { passive: true });
+  app.addEventListener('touchend', () => {
+    if (!pull) return;
+    const { sc, dy } = pull; pull = null;
+    sc.style.transition = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1)'; sc.style.transform = '';
+    setTimeout(() => { sc.style.transition = ''; }, 320);
+    const ind = document.getElementById('ptr');
+    if (dy * 0.5 < 60) { if (ind) ind.remove(); return; }
+    if (ind) ind.classList.add('spin');
+    const before = PL ? PL.playlists.reduce((n, p) => n + p.trackCount, 0) : 0;
+    Promise.all([loadPlaylists(), new Promise((r) => setTimeout(r, 600))]).then(() => {
+      const after = PL ? PL.playlists.reduce((n, p) => n + p.trackCount, 0) : 0;
+      const el = document.getElementById('ptr'); if (el) el.remove();
+      toast(after > before && before ? (after - before) + ' new shiurim' : 'You’re up to date');
+    });
+  });
+
   const toast = (m) => { toastMsg = m; render(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastMsg = ''; render(); }, 2200); };
 
   // ---------- Audio ----------
@@ -627,6 +675,11 @@
       S.notif.freq = n === 0 ? 'off' : n === 1 ? '1' : n === 3 ? '3' : n >= 6 ? 'daily' : 'custom'; persist(); render(); },
     ntime: (i) => { S.notif.time = +i; persist(); render(); },
     nflag: (k) => { S.notif[k] = !S.notif[k]; persist(); render(); },
+    alertSwitch: async () => {
+      S.alerts = !S.alerts; persist(); render();
+      if (S.alerts && 'Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
+      toast(S.alerts ? 'You’ll get one notification a day when new shiurim are up' : 'New shiur alerts off');
+    },
     testNotif: async () => {
       if (!('Notification' in window)) return toast('This browser can’t show notifications');
       const perm = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;

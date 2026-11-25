@@ -163,3 +163,8 @@ input[type=range].scrub::-moz-range-thumb { width: 16px; height: 16px; border: 0
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Pull to refresh */
+.ptr { position: absolute; left: 50%; top: calc(var(--top) + 4px); width: 26px; height: 26px; border-radius: 13px; border: 3px solid var(--track); border-top-color: var(--accent-text); z-index: 8; transform: translateX(-50%); pointer-events: none; }
+.ptr.spin { animation: ptr-spin 700ms linear infinite; opacity: 1 !important; }
+@keyframes ptr-spin { to { transform: translateX(-50%) rotate(360deg); } }
