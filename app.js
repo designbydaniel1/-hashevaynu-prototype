@@ -46,11 +46,29 @@
     other: { name: 'More Shiurim', short: 'More', badge: 'HS', tint: '#475569', total: 'Shiurim', sub: 'Hashevaynu' }
   };
   const SERIES_ORDER = ['daf', 'mb', 'me', 'ss', 'ah', 'ch'];
+  // Speakers, bios and sefarim from hashevaynu.org (Learning, speaker and Sefarim pages).
   const SPEAKERS = [
-    // Photos from hashevaynu.org/learning
-    { name: 'Rabbi Avi Zakutinsky', initials: 'AZ', topics: 'Daf Yomi, Semicha, Halacha', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603762635352-UFOM3MG8PY7K2ZLZURSJ/image-asset.png?format=300w' },
-    { name: 'Rabbi Yehuda Zakutinsky', initials: 'YZ', topics: 'Shiurim', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603769255642-0LZHER1WJLK6ES2M3MXE/Rabbi%2BYehuda%2BZakutinsky.jpg?format=300w' },
-    { name: 'R’ Dov Elias', initials: 'DE', topics: 'moonLight of Emuna, Chassidus, Nesivos Shalom', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603752235869-ECL3D45EKEVEJ6FYXT2J/Dovi.png?format=300w' }
+    { id: 'avi', name: 'Rabbi Avi Zakutinsky', initials: 'AZ', topics: 'Daf Yomi, Halacha, Semicha', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603762635352-UFOM3MG8PY7K2ZLZURSJ/image-asset.png?format=500w',
+      bio: 'Rabbi Avi Zakutinsky is the author of the Hebrew Seforim Umekareiv Biyamin (3 volumes) on halachic questions posed to those in kiruv and The Gates of Joy, an English Sefer on the laws and customs of the Jewish wedding. He currently teaches at Yeshivas Hashevaynu in Queens.',
+      links: [['Email Rabbi Avi', 'mailto:avizakutinsky@gmail.com'], ['Halacha blog', 'https://halachablog.com'], ['TorahAnytime', 'https://www.torahanytime.com'], ['YUTorah', 'https://www.yutorah.org']],
+      match: (t) => !/dov elias|moonlight|nesivos|chovas|rabbi zakutinsky/i.test(t),
+      books: [
+        { title: 'Umekareiv Biyamin', he: 'ומקרב בימין', sub: 'Sefer on Kiruv · 3 volumes · Hebrew', cover: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1625371110395-A59GWHERKS6YNP6XSK5C/WhatsApp+Image+2021-07-03+at+11.45.10+PM.jpeg?format=500w',
+          about: 'An in-depth analysis of the questions most often asked of kiruv rabbanim: pidyon haben when one does not know if the child is a kohen, levi or yisrael, attending a wedding in a conservative synagogue, secular tunes for davening, naming children after non-observant Jews, and more.',
+          actions: [['Volume 1 · Read free', 'https://hebrewbooks.org/pdfpager.aspx?pgnum=1&req=51347'], ['Volume 2 · Read free', 'https://hebrewbooks.org/pdfpager.aspx?pgnum=1&req=58755'], ['Volume 3 · Buy', 'mailto:avizakutinsky@gmail.com?subject=Umekareiv%20Biyamin%20Volume%203']] },
+        { title: 'The Gates of Joy', he: '', sub: 'The laws and customs of the Jewish wedding · 400 pages · English', cover: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1625371812104-GE924PFIWOAC0Q3XOEXU/Sefarim1.jpeg?format=500w',
+          about: 'Walks any couple through engagement and marriage, explaining the halachos and customs of Ashkenazim, Sephardim and Chassidim, including Chabad, for laymen and rabbis alike.',
+          actions: [['Buy · contact Rabbi Avi', 'mailto:avizakutinsky@gmail.com?subject=The%20Gates%20of%20Joy']] },
+        { title: 'Toras Hashevaynu', he: '', sub: 'Torah journal of halacha and hashkafa for the Seder', cover: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/473ff1d5-1a00-4302-b6f7-330062662f6c/Hagadah.png?format=500w',
+          about: 'Halacha and hashkafa for Pesach and the Seder, written by Rabbi Avi.',
+          actions: [['Download free', 'https://www.hashevaynu.org/s/FINAL-BOOKLET-Peasch-Pamphlet-FULL.pdf']] }
+      ] },
+    { id: 'yehuda', name: 'Rabbi Yehuda Zakutinsky', initials: 'YZ', topics: 'Founding Director', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603768842375-01HDXFIZO93S2S4IKKOC/Rabbi+Yehuda+Zakutinsky.png?format=500w',
+      bio: 'Rabbi Yehuda Zakutinsky is the founding Director of Hashevaynu. He is one of the pioneers of the kiruv movement and a leading authority on Jewish outreach. Hashevaynu’s ultimate goal is to make all Jews who pass through its doors feel like cherished members of the family who know that their problems are our problems and their joys are our joys.',
+      links: [], match: (t) => /rabbi zakutinsky/i.test(t), books: [] },
+    { id: 'dov', name: 'R’ Dov Elias', initials: 'DE', topics: 'moonLight of Emuna, Chassidus', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603752858225-0HQKCIQ0S2T5YX6BYS31/image-asset.png?format=500w',
+      bio: 'R’ Dov Elias is an attorney by training, a real estate investor by trade, but his passion is in chesed and teaching. He is a lecturer at Hashevaynu in Queens, NY, a Daf Yomi maggid shiur, and the translator and adaptor of the Light of Emuna. The “moonLight of Emuna” recordings developed out of a weekly shiur he gives: in each, he draws on ideas from the sefarim hakedoshim to craft a relevant message for the week.',
+      links: [['The Light of Emuna', 'https://www.tloe.us']], match: (t) => /dov elias|moonlight|nesivos|chovas/i.test(t), books: [] }
   ];
   const MASECHTA_LEN = { Eirachin: 34, Temurah: 34, Kerisus: 28, Meilah: 22, Kinnim: 25, Tamid: 33, Middos: 37, Niddah: 73, Bechoros: 61, Chullin: 142, Menachos: 110 };
 
@@ -373,7 +391,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
       return `<div class="sec-head" style="margin-top:26px"><h2 class="h2">${esc(c.title)} <span class="muted" style="font-size:15px;font-weight:500">${items.length}</span></h2>${items.length > 3 ? `<button class="link" data-act="go" data-arg="section:${c.id}">See all</button>` : ''}</div>
         <div class="hscroll" style="align-items:flex-start">${items.map((p) => plCard(p, 140)).join('')}</div>`; }).join('')}
     <h2 class="h2 pad" style="margin-top:28px;margin-bottom:6px">By speaker</h2>
-    <div class="pad">${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:68px;border-bottom:1px solid var(--sep);text-align:left">
+    <div class="pad">${SPEAKERS.map((p) => `<button data-act="go" data-arg="speaker:${p.id}" style="width:100%;display:flex;align-items:center;gap:12px;height:68px;border-bottom:1px solid var(--sep);text-align:left">
       ${p.photo ? `<img src="${p.photo}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:24px;object-fit:cover;flex:none;background:var(--avatar-bg)">` : `<div style="width:48px;height:48px;border-radius:24px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>`}
       <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}</div>
   </div>${searchBtn()}</div></div>`;
@@ -397,13 +415,42 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
       <div style="margin-top:10px">${eps.slice(0, S.plShow || 60).map(epRow).join('')}</div>
       ${eps.length > (S.plShow || 60) ? `<div class="pad" style="margin-top:12px"><button class="pill fill" style="width:100%" data-act="plMore">Show more (${eps.length - (S.plShow || 60)} left)</button></div>` : ''}
     ${searchBtn()}</div></div>`; };
+  screens.speaker = (id) => {
+    const sp = SPEAKERS.find((x) => x.id === id) || SPEAKERS[0];
+    const lists = PL ? PL.playlists.filter((p) => sp.match(p.title)) : [];
+    const daf = lists.filter((p) => p.category === 'daf'), other = lists.filter((p) => p.category !== 'daf');
+    return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="speaker-${id}" style="padding-top:calc(var(--top) - 4px)">
+      <div class="pad">${backBtn('Series')}
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin-top:6px">
+          <img src="${sp.photo}" alt="" style="width:120px;height:120px;border-radius:60px;object-fit:cover;background:var(--avatar-bg);box-shadow:0 8px 24px rgba(0,0,0,.15)">
+          <h1 style="font-size:26px;line-height:32px;font-weight:800;letter-spacing:-.01em;margin-top:6px">${esc(sp.name)}</h1>
+          <p class="row-meta" style="font-size:14px">${lists.length ? lists.length + ' playlists · ' + lists.reduce((n, p) => n + p.trackCount, 0).toLocaleString() + ' shiurim' : esc(sp.topics)}</p>
+        </div>
+        <p style="font-size:15px;line-height:23px;margin-top:16px">${esc(sp.bio)}</p>
+        ${sp.links.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">${sp.links.map(([l, u]) => `<a class="chip" style="display:inline-flex;align-items:center" href="${esc(u)}" target="_blank" rel="noopener">${esc(l)}</a>`).join('')}</div>` : ''}
+      </div>
+      ${other.length ? `<div class="sec-head" style="margin-top:28px"><h2 class="h2">Playlists <span class="muted" style="font-size:15px;font-weight:500">${other.length}</span></h2></div>
+        <div class="hscroll" style="align-items:flex-start">${other.map((p) => plCard(p, 140)).join('')}</div>` : ''}
+      ${daf.length ? `<div class="sec-head" style="margin-top:26px"><h2 class="h2">Daf Yomi <span class="muted" style="font-size:15px;font-weight:500">${daf.length}</span></h2><button class="link" data-act="dafMap">Daf map</button></div>
+        <div class="hscroll" style="align-items:flex-start">${daf.map((p) => plCard(p, 120)).join('')}</div>` : ''}
+      ${sp.books.length ? `<h2 class="h2 pad" style="margin-top:28px;margin-bottom:12px">Sefarim</h2>
+        <div class="pad" style="display:flex;flex-direction:column;gap:14px">${sp.books.map((b) => `<div style="border-radius:18px;background:var(--fill);padding:14px;display:flex;gap:14px">
+          <img src="${b.cover}" alt="${esc(b.title)} cover" loading="lazy" style="width:92px;height:130px;border-radius:8px;object-fit:cover;flex:none;background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,.15)">
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:17px;font-weight:700">${esc(b.title)}${b.he ? ` <span style="font-weight:600;color:var(--text2)" lang="he">${b.he}</span>` : ''}</div>
+            <div class="row-meta">${esc(b.sub)}</div>
+            <p style="font-size:13px;line-height:19px;margin-top:2px">${esc(b.about)}</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${b.actions.map(([l, u], k) => `<a href="${esc(u)}" target="_blank" rel="noopener" style="height:32px;padding:0 12px;border-radius:16px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;${k === 0 ? 'background:var(--accent);color:#fff' : 'background:var(--surface);color:var(--text)'}">${esc(l)}</a>`).join('')}</div>
+          </div></div>`).join('')}</div>` : ''}
+    ${searchBtn()}</div></div>`;
+  };
   const seriesFallback = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="series">
     <div class="pad"><h1 class="title">Series</h1><p class="sub" style="margin-bottom:18px">Browse shiurim by playlist</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${SERIES_ORDER.map((k) => { const s = SERIES[k]; return `<button data-act="${k === 'daf' ? 'tab' : 'go'}" data-arg="${k === 'daf' ? 'daf' : 'playlist:' + k}" style="height:168px;border-radius:18px;padding:14px;background:${s.tint};color:#fff;display:flex;flex-direction:column;justify-content:space-between;text-align:left">
       <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${s.badge}</div>
       <div><div style="font-size:17px;line-height:21px;font-weight:700">${esc(s.name)}</div><div style="font-size:12px;opacity:.85;margin-top:3px">${esc(s.total)}</div></div></button>`; }).join('')}</div>
     <h2 class="h2" style="margin:26px 0 6px">By speaker</h2>
-    ${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:68px;border-bottom:1px solid var(--sep);text-align:left">
+    ${SPEAKERS.map((p) => `<button data-act="go" data-arg="speaker:${p.id}" style="width:100%;display:flex;align-items:center;gap:12px;height:68px;border-bottom:1px solid var(--sep);text-align:left">
       ${p.photo ? `<img src="${p.photo}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:24px;object-fit:cover;flex:none;background:var(--avatar-bg)">` : `<div style="width:48px;height:48px;border-radius:24px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>`}
       <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}
     </div>${searchBtn()}</div></div>`;
