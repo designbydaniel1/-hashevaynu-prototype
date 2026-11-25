@@ -47,9 +47,10 @@
   };
   const SERIES_ORDER = ['daf', 'mb', 'me', 'ss', 'ah', 'ch'];
   const SPEAKERS = [
-    { name: 'Rabbi Avi Zakutinsky', initials: 'AZ', topics: 'Daf Yomi, Semicha, Halacha' },
-    { name: 'Rabbi Yehuda Zakutinsky', initials: 'YZ', topics: 'Shiurim' },
-    { name: 'R’ Dov Elias', initials: 'DE', topics: 'moonLight of Emuna' }
+    // Photos from hashevaynu.org/learning
+    { name: 'Rabbi Avi Zakutinsky', initials: 'AZ', topics: 'Daf Yomi, Semicha, Halacha', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603762635352-UFOM3MG8PY7K2ZLZURSJ/image-asset.png?format=300w' },
+    { name: 'Rabbi Yehuda Zakutinsky', initials: 'YZ', topics: 'Shiurim', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603769255642-0LZHER1WJLK6ES2M3MXE/Rabbi%2BYehuda%2BZakutinsky.jpg?format=300w' },
+    { name: 'R’ Dov Elias', initials: 'DE', topics: 'moonLight of Emuna, Chassidus, Nesivos Shalom', photo: 'https://images.squarespace-cdn.com/content/v1/5d6b53a89e0b8f0001645836/1603752235869-ECL3D45EKEVEJ6FYXT2J/Dovi.png?format=300w' }
   ];
   const MASECHTA_LEN = { Eirachin: 34, Temurah: 34, Kerisus: 28, Meilah: 22, Kinnim: 25, Tamid: 33, Middos: 37, Niddah: 73, Bechoros: 61, Chullin: 142, Menachos: 110 };
 
@@ -362,14 +363,18 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
   };
 
   screens.series = () => PL ? seriesSections() : seriesFallback();
+  /** The 5 most recently published playlists, not counting Daf Yomi masechtos. */
+  const featured = () => PL.playlists.filter((p) => p.category !== 'daf').slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')).slice(0, 5);
   const seriesSections = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="series">
     <div class="pad"><h1 class="title">Series</h1><p class="sub">${PL.playlists.length} playlists · ${PL.playlists.reduce((n, p) => n + p.trackCount, 0).toLocaleString()} shiurim</p></div>
-    ${PL.categories.map((c) => { const items = PL.playlists.filter((p) => p.category === c.id); if (!items.length) return '';
+    <div class="sec-head" style="margin-top:26px"><h2 class="h2">Featured</h2><span class="row-meta">Newest playlists</span></div>
+    <div class="hscroll" style="align-items:flex-start">${featured().map((p) => plCard(p, 220)).join('')}</div>
+    ${PL.categories.filter((c) => c.id !== 'daf').map((c) => { const items = PL.playlists.filter((p) => p.category === c.id); if (!items.length) return '';
       return `<div class="sec-head" style="margin-top:26px"><h2 class="h2">${esc(c.title)} <span class="muted" style="font-size:15px;font-weight:500">${items.length}</span></h2>${items.length > 3 ? `<button class="link" data-act="go" data-arg="section:${c.id}">See all</button>` : ''}</div>
         <div class="hscroll" style="align-items:flex-start">${items.map((p) => plCard(p, 140)).join('')}</div>`; }).join('')}
     <h2 class="h2 pad" style="margin-top:28px;margin-bottom:6px">By speaker</h2>
-    <div class="pad">${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:62px;border-bottom:1px solid var(--sep);text-align:left">
-      <div style="width:40px;height:40px;border-radius:20px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>
+    <div class="pad">${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:68px;border-bottom:1px solid var(--sep);text-align:left">
+      ${p.photo ? `<img src="${p.photo}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:24px;object-fit:cover;flex:none;background:var(--avatar-bg)">` : `<div style="width:48px;height:48px;border-radius:24px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>`}
       <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}</div>
   </div>${searchBtn()}</div></div>`;
   screens.section = (id) => { const c = PL && PL.categories.find((x) => x.id === id); if (!c) return seriesFallback();
@@ -398,8 +403,8 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
       <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${s.badge}</div>
       <div><div style="font-size:17px;line-height:21px;font-weight:700">${esc(s.name)}</div><div style="font-size:12px;opacity:.85;margin-top:3px">${esc(s.total)}</div></div></button>`; }).join('')}</div>
     <h2 class="h2" style="margin:26px 0 6px">By speaker</h2>
-    ${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:62px;border-bottom:1px solid var(--sep);text-align:left">
-      <div style="width:40px;height:40px;border-radius:20px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>
+    ${SPEAKERS.map((p) => `<button data-act="searchFor" data-arg="${esc(p.name)}" style="width:100%;display:flex;align-items:center;gap:12px;height:68px;border-bottom:1px solid var(--sep);text-align:left">
+      ${p.photo ? `<img src="${p.photo}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:24px;object-fit:cover;flex:none;background:var(--avatar-bg)">` : `<div style="width:48px;height:48px;border-radius:24px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div>`}
       <div style="flex:1"><div style="font-size:16px;font-weight:600">${esc(p.name)}</div><div class="row-meta">${esc(p.topics)}</div></div>${I.chev}</button>`).join('')}
     </div>${searchBtn()}</div></div>`;
 
@@ -431,7 +436,6 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
   const MORE = () => [
     ['Settings', [
       ['New shiur alerts', S.alerts ? 'On · once a day, when new shiurim are up' : 'Off', 'N', '#DC2626', 'switch', 'alerts'],
-      ['Notification center', 'Coming in Day 2 · preview the design', 'NC', '#64748B', 'go', 'notifications'],
       ['Appearance', { system: 'Match phone (light or dark)', light: 'Light', dark: 'Dark' }[S.theme], 'A', '#334155', 'theme', '']]],
     ['Announcements', [
       ['Announcements & Schedule', 'Join the Hashevaynu WhatsApp group', 'A', '#15803D', 'url', 'https://chat.whatsapp.com/L8jzrAuS89X3wQ9pT5zcR9'],
@@ -505,9 +509,9 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
 
   screens.search = () => `<div class="screen"><div style="position:absolute;left:0;right:0;top:0;padding:var(--top) 16px 10px;background:var(--bg);z-index:2;display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;align-items:center;gap:10px"><label style="flex:1;display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:12px;background:var(--fill);color:var(--text2)">${I.search}
-        <input id="q" type="search" value="${esc(S.query)}" placeholder="Shiurim, dafim, speakers" aria-label="Search shiurim, dafim and speakers" autocomplete="off" style="flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:16px;color:var(--text);outline:none"></label>
+        <input id="q" type="search" value="${esc(S.query)}" placeholder="Shiurim, dafim, playlists" aria-label="Search shiurim, dafim and playlists" autocomplete="off" style="flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:16px;color:var(--text);outline:none"></label>
         <button class="link" style="font-size:16px;font-weight:500" data-act="back">Cancel</button></div>
-      <div class="hscroll" style="padding:0;gap:8px">${[['all', 'All'], ['shiurim', 'Shiurim'], ['playlists', 'Playlists'], ['speakers', 'Speakers']].map(([k, l]) => `<button class="chip" aria-pressed="${S.scope === k}" data-act="scope" data-arg="${k}">${l}</button>`).join('')}</div>
+      <div class="hscroll" style="padding:0;gap:8px">${[['all', 'All'], ['shiurim', 'Shiurim'], ['playlists', 'Playlists']].map(([k, l]) => `<button class="chip" aria-pressed="${S.scope === k}" data-act="scope" data-arg="${k}">${l}</button>`).join('')}</div>
     </div>
     <div class="scroll" id="results" style="padding-top:calc(var(--top) + 112px);bottom:0">${searchResults()}</div></div>`;
 
@@ -515,18 +519,18 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     const q = S.query.trim().toLowerCase();
     if (!q) {
       return `<p class="label" style="margin:8px 16px 10px">Recent searches</p><div class="pad" style="display:flex;flex-wrap:wrap;gap:8px">
-        ${[today.mas, 'Basar B’Chalav', 'moonLight', 'Dov Elias'].map((r) => `<button class="chip" style="background:none;border:1px solid var(--border);font-weight:500" data-act="searchFor" data-arg="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+        ${[today.mas, 'Basar B’Chalav', 'moonLight', 'Chanukah'].map((r) => `<button class="chip" style="background:none;border:1px solid var(--border);font-weight:500" data-act="searchFor" data-arg="${esc(r)}">${esc(r)}</button>`).join('')}</div>
         <p class="label" style="margin:26px 16px 4px">Jump to</p>
         ${[['Today’s Daf', 'DY', 'var(--accent)', 'tab', 'daf'], ['Mishnah Berurah Yomi', 'MB', '#1F5F8B', 'go', 'playlist:mb'], ['Saved shiurim', 'SV', '#C2410C', 'tab', 'saved']].map(([l, b, c, a, g]) =>
           `<button data-act="${a}" data-arg="${g}" style="width:100%;display:flex;align-items:center;gap:12px;height:58px;padding:0 16px;border-bottom:1px solid var(--sep);text-align:left"><div class="tile" style="width:36px;height:36px;border-radius:10px;background:${c};font-size:12px">${b}</div><span style="flex:1;font-size:16px;font-weight:600">${l}</span>${I.chev}</button>`).join('')}`;
     }
     const has = (...xs) => xs.some((x) => String(x).toLowerCase().includes(q));
     const want = (k) => S.scope === 'all' || S.scope === k;
+    if (S.scope === 'speakers') S.scope = 'all';
     const pls = PL ? [] : Object.entries(SERIES).filter(([k, s]) => k !== 'other' && has(s.name, s.sub));
     const realPls = PL ? PL.playlists.filter((p) => has(p.title)) : [];
     const mas = Object.values(MASECHTOS).filter((m) => has(m.name, 'daf yomi'));
     const eps = (PL ? Object.values(byId) : EP).filter((e) => has(e.title, e.speaker)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    const spk = SPEAKERS.filter((p) => has(p.name, p.topics));
     let out = '';
     if (want('playlists') && realPls.length) {
       out += `<p class="label" style="margin:8px 16px 4px">Playlists</p>` + realPls.slice(0, 12).map((p) => `<button data-act="go" data-arg="pl:${p.id}" class="row" style="width:100%;text-align:left">${plTile(p, 48)}<div class="row-text"><span class="row-title">${esc(plName(p))}</span><span class="row-meta">${esc((PL.categories.find((c) => c.id === p.category) || {}).title)} · ${p.trackCount} shiurim</span></div>${I.chev}</button>`).join('');
@@ -536,7 +540,6 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
         + mas.map((m) => `<button data-act="dafMap" data-arg="${m.key}" class="row" style="width:100%;text-align:left"><div class="tile" style="width:48px;height:48px;background:var(--accent)">${m.key === 'current' ? 'DY' : m.num}</div><div class="row-text"><span class="row-title">${esc(m.name)}</span><span class="row-meta">Daf Yomi masechta · ${m.last - 1} dafim</span></div>${I.chev}</button>`).join('');
     }
     if (want('shiurim') && eps.length) out += `<p class="label" style="margin:18px 16px 4px">Shiurim</p>` + eps.slice(0, 30).map(epRow).join('');
-    if (want('speakers') && spk.length) out += `<p class="label" style="margin:18px 16px 4px">Speakers</p>` + spk.map((p) => `<div class="row"><div style="width:44px;height:44px;border-radius:22px;background:var(--avatar-bg);color:var(--icon);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${p.initials}</div><div class="row-text"><span class="row-title">${esc(p.name)}</span><span class="row-meta">${esc(p.topics)}</span></div></div>`).join('');
     return out || `<div style="margin-top:80px;padding:0 40px;text-align:center"><h2 style="font-size:20px;font-weight:700">No results for “${esc(S.query)}”</h2><p class="muted" style="margin-top:8px;font-size:15px;line-height:22px">Try a masechta, a daf like “${esc(today.mas)} ${today.daf}”, a topic or a speaker’s name.</p></div>`;
   };
 
