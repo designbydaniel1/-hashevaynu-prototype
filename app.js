@@ -55,7 +55,7 @@
 
   let dafEps = EP.filter((e) => e.series === 'daf');
   let todayDaf = dafEps[0];
-  const parseDaf = (t) => { const m = /^([A-Za-z’']+)\s+(\d+)/.exec(t || ''); return m ? { mas: m[1], daf: +m[2] } : null; };
+  const parseDaf = (t) => { const m = /^([A-Za-z’' ]+?)\s+(\d+)[ab]?\b/.exec(t || ''); return m ? { mas: m[1].trim(), daf: +m[2] } : null; };
   let today = parseDaf(todayDaf && todayDaf.title) || { mas: 'Eirachin', daf: 6 };
 
   const fill = (from, to, v, m) => { for (let d = from; d <= to; d++) m[d] = v; return m; };
@@ -63,13 +63,20 @@
     progress: (() => { const m = fill(2, Math.max(1, today.daf - 2), 1, {}); m[today.daf - 1] = 0.4; m[today.daf] = 0.3; return m; })(), reviews: { 2: 2 } };
   const bech = fill(2, 20, 1, {}); bech[9] = 0.5; bech[14] = 0.7; bech[25] = 1; fill(31, 45, 1, bech); bech[46] = 0.2; bech[47] = 1; fill(56, 61, 1, bech);
   const men = fill(2, 70, 1, {}); men[71] = 0.6; fill(85, 88, 1, men);
-  const MASECHTOS = {
-    current: cur,
+  // Every masechta in the Daf Yomi cycle with its last daf, newest first.
+  const SHAS = [["Brachos", 64], ["Shabbos", 157], ["Eiruvin", 105], ["Pesachim", 121], ["Shekalim", 22], ["Yoma", 88], ["Succah", 56], ["Beitzah", 40], ["Rosh Hashana", 35], ["Taanis", 31], ["Megillah", 32], ["Moed Katan", 29], ["Chagigah", 27], ["Yevamos", 122], ["Kesubos", 112], ["Nedarim", 91], ["Nazir", 66], ["Sota", 49], ["Gittin", 90], ["Kiddushin", 82], ["Baba Kamma", 119], ["Baba Metziah", 119], ["Bava Basra", 176], ["Sanhedrin", 113], ["Makkos", 24], ["Shavuos", 49], ["Avodah Zara", 76], ["Horayos", 14], ["Zevachim", 120], ["Menachos", 110], ["Chullin", 142], ["Bechoros", 61], ["Eirachin", 34]];
+  const MASECHTOS = {};
+  SHAS.map((m, i) => [i + 1, m[0], m[1]]).reverse().forEach(([num, name, last]) => {
+    const key = name.toLowerCase().replace(/[^a-z]/g, '');
+    if (name === today.mas) { cur.num = num; cur.last = last; MASECHTOS.current = cur; return; }
+    MASECHTOS[key] = { key, name, num, last, released: last, progress: {}, reviews: {} };
+  });
+  Object.assign(MASECHTOS, {
     bechoros: { key: 'bechoros', name: 'Bechoros', num: 32, last: 61, released: 61, progress: bech, reviews: { 3: 2, 17: 2, 33: 3, 47: 2 } },
     chullin: { key: 'chullin', name: 'Chullin', num: 31, last: 142, released: 142, progress: fill(2, 142, 1, {}), reviews: { 2: 2, 60: 2 } },
     menachos: { key: 'menachos', name: 'Menachos', num: 30, last: 110, released: 110, progress: men, reviews: {} }
-  };
-  if (today.mas === 'Bechoros') delete MASECHTOS.bechoros;
+  });
+  if (!MASECHTOS.current) MASECHTOS.current = cur;
 
   // ---------- State (saved on this device) ----------
   const STORE = 'hashevaynu-prototype-v1';
@@ -235,7 +242,23 @@
 
 const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:12px;background:var(--fill);margin:14px 16px 0">
     ${[['today', 'Today'], ['map', 'Daf map']].map(([k, l]) => `<button role="tab" aria-selected="${on === k}" data-act="dafTab" data-arg="${k}" style="height:36px;border-radius:9px;font-size:14px;font-weight:600;${on === k ? 'background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.15)' : 'color:var(--text2)'}">${l}</button>`).join('')}</div>`;
-  screens.daf = () => S.dafTab === 'map' ? screens.masechta(S.mas, true) : dafToday();
+  screens.daf = () => S.dafTab !== 'map' ? dafToday() : S.mapOpen ? screens.masechta(S.mas, true) : mapList();
+  const masStats = (m) => { const ov = S.overrides[m.key] || {}; let n = 0, started = 0;
+    for (let d = 2; d <= m.last; d++) { const p = (d in ov) ? ov[d] : (m.progress[d] || 0); if (p >= 1) n++; else if (p > 0) started++; } return { n, started, total: m.last - 1 }; };
+  const mapList = () => `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="maplist">
+      <div class="pad" style="padding-right:64px"><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>
+      ${dafTabs('map')}
+      <p class="pad row-meta" style="font-size:13px;margin:16px 0 6px">${Object.keys(MASECHTOS).length} masechtos · tap one to see your progress on every daf</p>
+      ${Object.values(MASECHTOS).map((m) => { const st = masStats(m), active = m.key === 'current', done = st.n === st.total, pct = Math.round(st.n / st.total * 100);
+        const [label, color] = active ? ['Learning now', 'var(--accent-text)'] : done ? ['Siyum', 'var(--on)'] : st.n || st.started ? ['In progress', 'var(--accent-text)'] : ['Not started', 'var(--text2)'];
+        return `<button data-act="openMap" data-arg="${m.key}" aria-label="${esc(m.name)}, ${label}, ${st.n} of ${st.total} dafim learned" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--sep);text-align:left">
+          <div class="tile" style="width:44px;height:44px;border-radius:12px;background:${active ? 'var(--accent)' : done ? 'var(--on)' : 'var(--fill)'};color:${active || done ? '#fff' : 'var(--text2)'};font-size:14px">${done ? I.check(18) : m.num}</div>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:16px;font-weight:600">${esc(m.name)}</span><span style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${pct ? 'var(--text)' : 'var(--text2)'}">${pct}%</span></div>
+            <div class="bar"><i style="width:${pct}%;${done ? 'background:var(--on)' : ''}"></i></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="font-weight:700;color:${color}">${label}</span><span class="muted">${st.n} of ${st.total} dafim${st.started ? ' · ' + st.started + ' started' : ''}</span></div>
+          </div>${I.chev}</button>`; }).join('')}
+    ${searchBtn()}</div></div>`;
   const dafToday = () => {
     const todayPlaying = todayDaf && S.current === todayDaf.id && S.playing;
     const week = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -258,7 +281,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
         <p class="pad row-meta" style="font-size:13px;margin:-6px 0 12px">Every masechta in the cycle, newest first</p>
         <div class="hscroll" style="align-items:flex-start">${daf.map((p) => plCard(p, 132)).join('')}</div>`; })() : ''}
       <h2 class="h2" style="margin:24px 16px 4px">Your masechtos</h2><p class="pad row-meta" style="font-size:13px;margin-bottom:12px">Progress counts every daf you learned, in any order</p>
-      <div class="pad" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${Object.values(MASECHTOS).map((m) => { const n = stats(m), total = m.last - 1, active = m.key === 'current';
+      <div class="pad" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${Object.values(MASECHTOS).filter((m) => m.key === 'current' || stats(m) > 0).map((m) => { const n = stats(m), total = m.last - 1, active = m.key === 'current';
         const status = active ? 'Learning now' : n === total ? 'Siyum' : 'In progress';
         return `<button data-act="dafMap" data-arg="${m.key}" style="border-radius:18px;padding:14px;background:var(--fill);display:flex;flex-direction:column;gap:10px;text-align:left">
           <div style="display:flex;justify-content:space-between;align-items:center;width:100%"><div style="width:36px;height:36px;border-radius:10px;background:${active ? 'var(--accent)' : 'var(--bg)'};color:${active ? '#fff' : 'var(--text2)'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">${active ? '' : m.num}${active ? I.play(14) : ''}</div>
@@ -296,7 +319,10 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     if (S.sel) {
       const d = S.sel, p = prog(d), avail = d <= base.released, rev = base.reviews[d] || 1;
       const status = !avail ? 'Coming soon in the Daf Yomi cycle' : p >= 1 ? 'Learned' + (rev > 1 ? ' · reviewed ' + rev + ' times' : '') : p > 0 ? Math.round(p * 100) + '% listened · pick up where you left off' : 'Not started yet';
-      const ep = base.key === 'current' ? dafEps.find((e) => (parseDaf(e.title) || {}).daf === d) : null;
+      const norm = (x) => x.toLowerCase().replace(/[^a-z]/g, '');
+      const pl = PL && PL.playlists.find((x) => x.category === 'daf' && norm(x.short) === norm(base.name));
+      const pool = pl ? pl.eps : base.key === 'current' ? dafEps : [];
+      const ep = pool.find((e) => (parseDaf(e.title) || {}).daf === d);
       card = `<div class="float-card"><div style="display:flex;justify-content:space-between;gap:8px"><div><div style="font-size:17px;font-weight:700">${esc(base.name)} ${d}a–${d}b</div><div class="row-meta" style="font-size:13px">${status}</div></div>
         <button class="icon-btn" style="width:32px;height:32px;color:var(--text2)" data-act="sel" data-arg="0" aria-label="Close">${I.x}</button></div>
         ${avail ? `<div style="display:flex;gap:8px"><button class="pill solid" style="flex:1" data-act="${ep ? 'play' : 'toast'}" data-arg="${ep ? ep.id : 'In the app, this plays ' + esc(base.name) + ' ' + d + ' from SoundCloud'}">${I.play(16)}${p >= 1 ? 'Review' : p > 0 ? 'Resume' : 'Play'}</button>
@@ -304,8 +330,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     }
     const colors = ['var(--accent)', '#F59E0B', '#10B981', '#EC4899', '#8B5CF6', '#0EA5E9'];
     return `<div class="screen"><div class="scroll" data-key="masechta" style="padding-top:calc(var(--top) - 4px);padding-bottom:${S.sel ? 170 : 24}px">
-      ${embedded ? `<div class="pad" style="padding-right:64px;padding-top:4px"><h1 class="title">Daf Yomi</h1><p class="sub">Rabbi Avi Zakutinsky</p></div>${dafTabs('map')}` : `<div class="pad">${backBtn('Daf Yomi')}</div>`}
-      <div class="hscroll" style="gap:8px;margin-top:${embedded ? 14 : 8}px">${Object.values(MASECHTOS).map((m) => `<button class="chip" aria-pressed="${m.key === base.key}" data-act="mas" data-arg="${m.key}">${esc(m.name)}</button>`).join('')}</div>
+      ${embedded ? `<div class="pad"><button class="back" data-act="mapList">${I.back}All masechtos</button></div>` : `<div class="pad">${backBtn('Daf Yomi')}</div>`}
       <div class="pad" style="margin-top:14px;display:flex;align-items:center;gap:16px">
         <div style="position:relative;width:92px;height:92px;flex:none"><svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="38" fill="none" stroke="var(--track)" stroke-width="9"/>
           <circle cx="46" cy="46" r="38" fill="none" stroke="var(--accent-text)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C * ratio).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 46 46)" style="transition:stroke-dasharray 500ms cubic-bezier(.22,1,.36,1)"/></svg>
@@ -655,8 +680,10 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
     theme: () => { S.theme = { system: 'light', light: 'dark', dark: 'system' }[S.theme]; applyTheme(); persist(); render(); },
     searchFor: (q) => { S.query = q; if (route()[0] === 'search') { render(); } else go('search'); },
     scope: (k) => { S.scope = k; render(); },
-    dafTab: (k) => { S.dafTab = k; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
-    dafMap: (k) => { S.tab = 'daf'; S.stack = []; S.dafTab = 'map'; S.mas = k || 'current'; S.masShown = S.mas; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
+    dafTab: (k) => { S.dafTab = k; S.mapOpen = false; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
+    openMap: (k) => { S.mapOpen = true; S.mas = k; S.masShown = k; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
+    mapList: () => { S.mapOpen = false; S.sel = null; render(); },
+    dafMap: (k) => { S.tab = 'daf'; S.stack = []; S.dafTab = 'map'; S.mapOpen = true; S.mas = k || 'current'; S.masShown = S.mas; S.sel = null; render(); const el = app.querySelector('.scroll'); if (el) el.scrollTop = 0; },
     plOrder: () => { S.plOldest = !S.plOldest; S.plShow = 60; render(); },
     plMore: () => { S.plShow = (S.plShow || 60) + 100; render(); },
     mas: (k) => { S.mas = k; S.masShown = k; S.sel = null; if (S.stack.length) S.stack[S.stack.length - 1] = 'masechta:' + k; const st = app.querySelector('.scroll'); if (st) st.scrollTop = 0; render(); },
