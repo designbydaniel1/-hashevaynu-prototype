@@ -609,8 +609,7 @@ const dafTabs = (on) => `<div role="tablist" aria-label="Daf" style="display:gri
         <button class="icon-btn" style="width:52px;height:52px;background:none;color:var(--text)" data-act="skip" data-arg="-15" aria-label="Back 15 seconds">${I.skip(-1, 15, 34)}</button>
         <button class="icon-btn" style="width:80px;height:80px;border-radius:40px;background:var(--accent);color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.2)" data-act="toggle" aria-label="${S.playing ? 'Pause' : 'Play'}">${S.playing ? I.pause(32) : I.play(32)}</button>
         <button class="icon-btn" style="width:52px;height:52px;background:none;color:var(--text)" data-act="skip" data-arg="30" aria-label="Forward 30 seconds">${I.skip(1, 30, 34)}</button></div>
-      <div style="margin-top:auto;padding-top:18px;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
-        <button class="feature ${S.sleep ? 'on' : ''}" data-act="sleep">${I.moon}${sleeps[S.sleep]}</button>
+      <div style="margin-top:auto;padding-top:18px;width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:8px">
         <button class="feature ${dl === 2 ? 'on' : ''}" data-act="download">${I.dl}${['Download', 'Downloading…', 'Downloaded'][dl]}</button></div>
       <div style="margin-top:10px;width:100%;display:flex;justify-content:space-between">
         <button class="pill fill" style="color:${saved ? 'var(--save)' : 'var(--text)'}" data-act="save" data-arg="${e.id}">${I.bookmark(saved, 20)}${saved ? 'Saved' : 'Save'}</button>
