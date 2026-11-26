@@ -182,7 +182,7 @@
 
   // ---------- Shared pieces ----------
   const tabbar = () => `<nav class="tabbar" aria-label="Tabs">${TABS.map(([k, label, icon]) =>
-    `<button class="tab" data-act="tab" data-arg="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>${icon}${label}</button>`).join('')}</nav>`;
+    `<button class="tab" data-act="tab" data-arg="${k}" aria-label="${label}" ${S.tab === k ? 'aria-current="page"' : ''}>${icon}<span class="tab-label">${label}</span></button>`).join('')}</nav>`;
   const searchBtn = (onAccent) => `<button class="icon-btn search-btn" data-act="go" data-arg="search" aria-label="Search" ${onAccent ? 'style="background:rgba(255,255,255,0.18);color:#fff"' : ''}>${I.search}</button>`;
   const backBtn = (label) => `<button class="back" data-act="back">${I.back}${esc(label)}</button>`;
 
