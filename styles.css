@@ -2,29 +2,34 @@
 :root {
   --accent: #1D4E89;
   --accent-text: #1D4E89;
-  --bg: #FFFFFF;
-  --grouped: #F2F3F6;
-  --surface: #FFFFFF;
-  --fill: #F1F2F5;
+  --bg: #F8F6F1;
+  --grouped: #F1EEE7;
+  --surface: #FFFDF9;
+  --fill: #EFECE5;
   --text: #111827;
   --text2: #5B6472;
   --icon: #374151;
   --tab: #6B7280;
-  --sep: #ECEEF1;
-  --border: #E5E7EB;
-  --track: #E3E6EA;
-  --tabbg: rgba(255, 255, 255, 0.94);
+  --sep: #E9E5DD;
+  --border: #E2DDD3;
+  --track: #E2DED5;
+  --tabbg: rgba(248, 246, 241, 0.94);
   --chevron: #9CA3AF;
   --save: #C2410C;
   --save-bg: #FFF1E8;
-  --avatar-bg: #EEF1F6;
+  --avatar-bg: #EDEAE3;
   --unplayed: #E8EEF7;
   --streak: #F97316;
   --on: #16A34A;
   --top: calc(env(safe-area-inset-top, 0px) + 16px);
   --bottom: env(safe-area-inset-bottom, 0px);
-  --tabh: calc(52px + var(--bottom));
-  --page: #E9ECF1;
+  --tabh: calc(74px + var(--bottom));
+  --glass: rgba(255, 253, 249, 0.7);
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-hi: rgba(255, 255, 255, 0.9);
+  --glass-sel: rgba(29, 78, 137, 0.10);
+  --glass-shadow: 0 8px 28px rgba(60, 50, 30, 0.14), 0 1px 3px rgba(60, 50, 30, 0.08);
+  --page: #E4E0D8;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -32,14 +37,14 @@
     --accent-text: #8EA7C4; --bg: #0E1116; --grouped: #0E1116; --surface: #1A1E25; --fill: #222730;
     --text: #F3F4F6; --text2: #9AA3AF; --icon: #D1D5DB; --tab: #8B93A1; --sep: #232830; --border: #262B33;
     --track: #2D333C; --tabbg: rgba(14, 17, 22, 0.94); --chevron: #6B7280; --save: #FB923C; --save-bg: #3A2416;
-    --avatar-bg: #232830; --unplayed: #132339; --page: #05070A; color-scheme: dark;
+    --avatar-bg: #232830; --unplayed: #132339; --page: #05070A; --glass: rgba(34, 39, 48, 0.55); --glass-edge: rgba(255, 255, 255, 0.12); --glass-hi: rgba(255, 255, 255, 0.14); --glass-sel: rgba(142, 167, 196, 0.16); --glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --accent-text: #8EA7C4; --bg: #0E1116; --grouped: #0E1116; --surface: #1A1E25; --fill: #222730;
   --text: #F3F4F6; --text2: #9AA3AF; --icon: #D1D5DB; --tab: #8B93A1; --sep: #232830; --border: #262B33;
   --track: #2D333C; --tabbg: rgba(14, 17, 22, 0.94); --chevron: #6B7280; --save: #FB923C; --save-bg: #3A2416;
-  --avatar-bg: #232830; --unplayed: #132339; --page: #05070A; color-scheme: dark;
+  --avatar-bg: #232830; --unplayed: #132339; --page: #05070A; --glass: rgba(34, 39, 48, 0.55); --glass-edge: rgba(255, 255, 255, 0.12); --glass-hi: rgba(255, 255, 255, 0.14); --glass-sel: rgba(142, 167, 196, 0.16); --glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3); color-scheme: dark;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -112,16 +117,17 @@ h1, h2, p { margin: 0; }
 .glyph { width: 30px; height: 30px; border-radius: 8px; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex: none; }
 
 /* Tab bar */
-.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: var(--tabh); padding: 6px 0 var(--bottom); background: var(--tabbg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); z-index: 10; }
-.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--tab); height: 46px; }
-.tab[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
+.tabbar { position: absolute; left: 14px; right: 14px; bottom: max(10px, calc(var(--bottom) - 14px)); height: 64px; padding: 6px; border-radius: 32px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); z-index: 10; }
+.glass, .tabbar, .mini, .icon-btn.search-btn { background: var(--glass); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow); }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10.5px; font-weight: 500; color: var(--tab); height: 50px; border-radius: 26px; transition: background 200ms; }
+.tab[aria-current="page"] { color: var(--accent-text); font-weight: 600; background: var(--glass-sel); }
 
 /* Mini player */
-.mini { position: absolute; left: 8px; right: 8px; bottom: calc(var(--tabh) + 8px); height: 60px; border-radius: 16px; background: var(--surface); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16), 0 0 0 1px var(--border); display: flex; align-items: center; gap: 4px; padding: 0 6px 0 8px; overflow: hidden; z-index: 9; }
+.mini { position: absolute; left: 14px; right: 14px; bottom: calc(var(--tabh) + 4px); height: 60px; border-radius: 30px; display: flex; align-items: center; gap: 4px; padding: 0 6px 0 8px; overflow: hidden; z-index: 9; }
 .mini.anim { animation: rise 350ms cubic-bezier(0.22, 1, 0.36, 1); }
 .mini-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 60px; text-align: left; }
 .mini-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mini-progress { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent-text); }
+.mini-progress { position: absolute; left: 22px; bottom: 0; height: 2.5px; border-radius: 2px; max-width: calc(100% - 44px); background: var(--accent-text); }
 @keyframes rise { from { transform: translateY(16px) scale(0.97); opacity: 0; filter: blur(2px); } }
 
 /* Full player sheet */
