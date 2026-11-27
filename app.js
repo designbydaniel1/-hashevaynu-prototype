@@ -18,9 +18,10 @@
         plById[p.id] = p;
         p.eps = p.tracks.filter((t) => t.audio).map((t) => {
           const known = byId[t.id];
-          const e = known || { id: t.id, title: t.title, date: t.date, dur: t.duration, audio: t.audio, link: t.link,
+          const e = known || { id: t.id, title: t.title, date: t.date, uploaded: t.uploaded, dur: t.duration, audio: t.audio, link: t.link,
             series: SERIES_OF[p.category] || (/mishnah berurah/i.test(p.title) ? 'mb' : /moonlight/i.test(p.title) ? 'me' : 'other'),
             speaker: /dov elias/i.test(p.title + t.title) ? 'R’ Dov Elias' : 'Rabbi Avi Zakutinsky' };
+          if (known && !known.uploaded) known.uploaded = t.uploaded;
           if (!known) { if (e.series === 'other') { e.badge = p.badge; e.tint = p.color; } e.art = t.artwork || p.artwork; byId[t.id] = e; }
           e.cover = e.cover || t.artwork || p.artwork || d.avatar;
           return e;
@@ -227,13 +228,16 @@
 
   screens.main = () => {
     const cont = EP.filter((e) => { const p = progress(e); return p > 0 && p < 1; }).slice(0, 6);
+    // The newest upload from any playlist, Daf or otherwise. Today’s Daf lives on the Daf tab.
+    const when = (e) => e.uploaded || e.date || '';
+    const latest = (PL ? Object.values(byId) : EP).reduce((a, e) => (!a || when(e) > when(a) ? e : a), null);
     return `<div class="screen"><div class="scroll ${S.current ? 'with-mini' : ''}" data-key="main">
       <div class="pad" style="padding-right:64px"><h1 class="title">Hashevaynu</h1><p class="sub">${PL ? PL.playlists.length + ' playlists · ' + PL.playlists.reduce((n, p) => n + p.trackCount, 0).toLocaleString() + ' shiurim' : 'Shiurim from Rabbi Avi Zakutinsky and R’ Dov Elias'}</p></div>
-      ${todayDaf ? `<div class="pad" style="margin-top:16px"><div class="card-accent">
-        <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85"><b style="letter-spacing:.08em;text-transform:uppercase">Today’s Daf</b><span>${fmtDate(todayDaf.date)} · ${fmtMin(todayDaf.dur)}</span></div>
-        <div style="font-size:24px;line-height:30px;font-weight:800;letter-spacing:-.01em">${esc(todayDaf.title.replace(' (Daf Yomi)', ''))}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;opacity:.9">Rabbi Avi Zakutinsky</span>
-          <button class="pill white" style="height:40px;padding:0 16px 0 12px" data-act="play" data-arg="${todayDaf.id}">${S.current === todayDaf.id && S.playing ? I.pause(16) + 'Pause' : I.play(16) + 'Play'}</button></div>
+      ${latest ? `<div class="pad" style="margin-top:16px"><div class="card-accent">
+        <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85"><b style="letter-spacing:.08em;text-transform:uppercase">Latest shiur</b><span>${fmtDate(latest.date)} · ${fmtMin(latest.dur)}</span></div>
+        <div style="font-size:24px;line-height:30px;font-weight:800;letter-spacing:-.01em">${esc(latest.title)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-size:14px;opacity:.9">${esc(latest.speaker || '')}</span>
+          <button class="pill white" style="height:40px;padding:0 16px 0 12px;flex:none" data-act="play" data-arg="${latest.id}">${S.current === latest.id && S.playing ? I.pause(16) + 'Pause' : I.play(16) + 'Play'}</button></div>
       </div></div>` : ''}
       ${cont.length ? `<div class="sec-head"><h2 class="h2">Continue listening</h2></div>
       <div class="hscroll">${cont.map((e) => `<div style="width:250px;padding:12px;border-radius:16px;background:var(--fill);display:flex;align-items:center;gap:12px">
