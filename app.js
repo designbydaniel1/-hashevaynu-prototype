@@ -208,7 +208,7 @@
     return `<div class="mini${enter('mini', S.current)}">
       <button class="mini-open" data-act="openPlayer" aria-label="Open player">
         ${tile(e, 42)}
-        <div style="min-width:0;display:flex;flex-direction:column"><span class="mini-title">${esc(e.title)}</span><span class="row-meta">${esc(e.speaker)}</span></div>
+        <span class="mini-title" style="min-width:0;font-size:15px">${esc(e.title)}</span>
       </button>
       <button class="icon-btn" style="background:none;color:var(--text)" data-act="toggle" aria-label="${S.playing ? 'Pause' : 'Play'}">${S.playing ? I.pause(24) : I.play(24)}</button>
       <button class="icon-btn" style="background:none;color:var(--text)" data-act="skip" data-arg="30" aria-label="Skip forward 30 seconds">${I.skip(1, 30)}</button>
